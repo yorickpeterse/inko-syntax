@@ -1,0 +1,15 @@
+---
+name: Push
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/inko-lang/inko:main
+    steps:
+      - run: microdnf install --quiet --assumeyes tar git
+      - uses: actions/checkout@v3
+      - run: inko --version
+      - run: inko pkg sync
+      - run: inko test
