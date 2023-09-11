@@ -1,6 +1,6 @@
 # inko-syntax
 
-A syntax highlighting library for [Inko](https://inko-lang.org), with
+A simple syntax highlighting library for [Inko](https://inko-lang.org), with
 [Pygments](https://pygments.org/) compatible HTML output.
 
 # Requirements
