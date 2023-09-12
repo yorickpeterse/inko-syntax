@@ -1,25 +1,23 @@
+# A simple syntax highlighting library for Inko.
+import std.cmp.Equal
 import std.fmt.(Format, Formatter)
 import std.iter.Iter
 import std.string.Bytes
+import syntax.helpers.(LF, whitespace?)
 
-let PLUS = 43
-let HYPHEN = 45
-let PERIOD = 46
-let ZERO = 48
-let NINE = 57
-let UPPER_E = 69
-let UNDER = 95
-let LOWER_E = 101
-
-# Returns `true` if the given byte is a digit in the inclusive range of 0 to 9.
-fn pub digit?(byte: Int) -> Bool {
-  byte >= ZERO and byte <= NINE
-}
+# The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
+# the input is reached.
+let pub EOF = -1
 
 # A token to highlight.
 #
 # A token can be a comment, a string, a keyword, or just regular text.
 class pub enum Token {
+  # A token produced as a result of invalid syntax.
+  #
+  # The wrapped `Int` is the byte offset at which the error is encountered.
+  case Invalid(Int)
+
   # A single or multi-line comment.
   case Comment(String)
 
@@ -41,16 +39,31 @@ class pub enum Token {
   # A keyword, such as `class`.
   case Keyword(String)
 
-  # A symbol, such as `[` or `^`.
-  case Symbol(String)
+  # A reference to a field, such as `self.foo` in Rust or `@foo` in Inko.
+  case Field(String)
+}
 
-  # Code that isn't syntactically correct.
-  case Error(String)
+impl Equal[Token] for Token {
+  fn pub ==(other: ref Token) -> Bool {
+    match (self, other) {
+      case (Invalid(a), Invalid(b)) -> a == b
+      case (Comment(a), Comment(b)) -> a == b
+      case (DoubleString(a), DoubleString(b)) -> a == b
+      case (SingleString(a), SingleString(b)) -> a == b
+      case (Int(a), Int(b)) -> a == b
+      case (Float(a), Float(b)) -> a == b
+      case (Text(a), Text(b)) -> a == b
+      case (Keyword(a), Keyword(b)) -> a == b
+      case (Field(a), Field(b)) -> a == b
+      case _ -> false
+    }
+  }
 }
 
 impl Format for Token {
   fn pub fmt(formatter: mut Formatter) {
     match self {
+      case Invalid(v) -> formatter.tuple('Invalid').field(v).finish
       case Comment(v) -> formatter.tuple('Comment').field(v).finish
       case DoubleString(v) -> formatter.tuple('DoubleString').field(v).finish
       case SingleString(v) -> formatter.tuple('SingleString').field(v).finish
@@ -58,8 +71,7 @@ impl Format for Token {
       case Float(v) -> formatter.tuple('Float').field(v).finish
       case Text(v) -> formatter.tuple('Text').field(v).finish
       case Keyword(v) -> formatter.tuple('Keyword').field(v).finish
-      case Symbol(v) -> formatter.tuple('Symbol').field(v).finish
-      case Error(v) -> formatter.tuple('Error').field(v).finish
+      case Field(v) -> formatter.tuple('Field').field(v).finish
     }
   }
 }
@@ -79,7 +91,7 @@ trait pub Lexer: Iter[Token] {
   #
   # If all bytes are consumed, this method returns `-1`
   fn pub current -> Int {
-    if offset < bytes.size { bytes.byte(offset) } else { -1 }
+    if offset < bytes.size { bytes.byte(offset) } else { EOF }
   }
 
   # Returns the byte at the next byte offset.
@@ -88,63 +100,28 @@ trait pub Lexer: Iter[Token] {
   fn pub peek -> Int {
     let idx = offset + 1
 
-    if idx < bytes.size { bytes.byte(idx) } else { -1 }
+    if idx < bytes.size { bytes.byte(idx) } else { EOF }
   }
 
   # Slices the range of bytes into a `String`.
   fn pub slice(start: Int, stop: Int) -> String {
     bytes.slice(start, stop - start).into_string
   }
-}
 
-# Methods for lexing numbers.
-trait pub Numbers: Lexer {
-  # Lexes a sequence into either an integer or a float.
-  #
-  # This method supports the following formats:
-  #
-  # - `10`
-  # - `10_00`
-  # - `10.2`
-  # - `10e2`
-  # - `10E2`
-  # - `10e+2`
-  # - `10e-2`
-  # - `10e2`
-  #
-  # This method expects that `current` points to a valid digit (as decided by
-  # the `digit?` method) at the start.
-  fn pub mut number -> Token {
-    let start = offset
-
-    digits
-
-    match current {
-      case PERIOD -> {
-        if digit?(peek).false? { return Token.Int(slice(start, offset - 1)) }
-
-        advance
-        digits
-        Token.Float(slice(start, offset))
-      }
-      case LOWER_E or UPPER_E -> {
-        advance
-
-        match current {
-          case PLUS or HYPHEN -> advance
-          case byte if digit?(byte) -> advance
-          case _ -> return Token.Error(slice(start, offset))
-        }
-
-        digits
-        Token.Float(slice(start, offset))
-      }
-      case _ -> Token.Int(slice(start, offset))
-    }
+  # Advances the byte offset until the end of the current line
+  fn pub mut advance_until_eol {
+    while current != EOF and current != LF { advance }
   }
 
-  # Advances the cursor as long as the current byte is a digit or an underscore.
-  fn pub mut digits {
-    while digit?(current) or current == UNDER { advance }
+  # Advances the byte offset until the first non-whitespace byte.
+  fn pub mut advance_whitespace {
+    while whitespace?(current) { advance }
+  }
+
+  # Returns an invalid token for the current offset, and advances the offset to
+  # the next byte.
+  fn pub mut invalid -> Token {
+    advance
+    Token.Invalid(offset - 1)
   }
 }

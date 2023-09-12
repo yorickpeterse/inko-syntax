@@ -1,0 +1,186 @@
+# Lexical analysis of Inko source code.
+import std.iter.Iter
+import std.set.Set
+import std.string.Bytes
+import syntax.(EOF, Lexer as LexerTrait, Token)
+import syntax.helpers.(digit?, whitespace?)
+
+let DQUOTE = 34
+let HASH = 35
+let SQUOTE = 39
+let PLUS = 43
+let HYPHEN = 45
+let PERIOD = 46
+let QUEST = 63
+let UPPER_A = 65
+let UPPER_E = 69
+let UPPER_Z = 90
+let BSLASH = 92
+let UNDER = 95
+let LOWER_A = 97
+let LOWER_E = 101
+let LOWER_Z = 122
+
+let KEYWORDS = [
+  'as', 'and', 'async', 'break', 'builtin', 'case', 'class', 'else', 'enum',
+  'extern', 'false', 'fn', 'for', 'if', 'impl', 'import', 'let', 'loop',
+  'match', 'move', 'mut', 'next', 'nil', 'or', 'pub', 'recover', 'ref',
+  'return', 'self', 'static', 'throw', 'trait', 'true', 'try', 'uni', 'while',
+]
+
+fn letter?(byte: Int) -> Bool {
+  (byte >= LOWER_A and byte <= LOWER_Z)
+    or (byte >= UPPER_A and byte <= UPPER_Z)
+}
+
+fn symbol?(byte: Int) -> Bool {
+  (byte >= 33 and byte <= 38)
+    or (byte >= 40 and byte <= 47)
+    or (byte >= 60 and byte <= 64)
+    or (byte >= 91 and byte <= 96)
+    or (byte >= 123 and byte <= 126)
+}
+
+# A type that turns Inko source code into a stream of tokens.
+class pub Lexer {
+  let @bytes: ref Bytes
+  let @index: Int
+  let @keywords: Set[String]
+
+  # Returns a new `Lexer` that lexes the given input.
+  fn pub static new(bytes: ref Bytes) -> Lexer {
+    Lexer {
+      @bytes = bytes,
+      @index = 0,
+      @keywords = KEYWORDS.iter.reduce(Set.new) fn (set, kw) {
+        set.insert(kw)
+        set
+      }
+    }
+  }
+
+  fn mut single_string -> Token {
+    Token.SingleString(string(SQUOTE))
+  }
+
+  fn mut double_string -> Token {
+    Token.DoubleString(string(DQUOTE))
+  }
+
+  fn mut string(quote: Int) -> String {
+    let start = offset
+
+    advance
+
+    while current != EOF and current != quote {
+      if current == BSLASH and peek == quote { advance }
+
+      advance
+    }
+
+    advance
+    slice(start, offset)
+  }
+
+  fn mut symbol -> Token {
+    advance
+    Token.Text(slice(offset - 1, offset))
+  }
+
+  fn mut word -> Token {
+    let start = offset
+
+    while offset < bytes.size {
+      if letter?(current) or digit?(current) or current == UNDER {
+        advance
+      } else if current == QUEST {
+        advance
+        break
+      } else {
+        break
+      }
+    }
+
+    match slice(start, offset) {
+      case word if @keywords.contains?(word) -> Token.Keyword(word)
+      case word -> Token.Text(word)
+    }
+  }
+
+  fn mut whitespace -> Token {
+    let start = offset
+
+    advance_whitespace
+    Token.Text(slice(start, offset))
+  }
+
+  fn mut line_comment -> Token {
+    let start = offset
+
+    advance_until_eol
+    Token.Comment(slice(start, offset))
+  }
+
+  fn mut number -> Token {
+    let start = offset
+
+    digits
+
+    match current {
+      case PERIOD -> {
+        if digit?(peek).false? { return Token.Int(slice(start, offset - 1)) }
+
+        advance
+        digits
+        Token.Float(slice(start, offset))
+      }
+      case LOWER_E or UPPER_E -> {
+        advance
+
+        match current {
+          case PLUS or HYPHEN if digit?(peek) -> advance
+          case byte if digit?(byte) -> advance
+          case _ -> return invalid
+        }
+
+        digits
+        Token.Float(slice(start, offset))
+      }
+      case _ -> Token.Int(slice(start, offset))
+    }
+  }
+
+  fn mut digits {
+    while digit?(current) or current == UNDER { advance }
+  }
+}
+
+impl Iter[Token] for Lexer {
+  fn pub mut next -> Option[Token] {
+    match current {
+      case DQUOTE -> Option.Some(double_string)
+      case SQUOTE -> Option.Some(single_string)
+      case HASH -> Option.Some(line_comment)
+      case byte if digit?(byte) -> Option.Some(number)
+      case byte if symbol?(byte) -> Option.Some(symbol)
+      case byte if letter?(byte) -> Option.Some(word)
+      case byte if whitespace?(byte) -> Option.Some(whitespace)
+      case EOF -> Option.None
+      case _ -> Option.Some(invalid)
+    }
+  }
+}
+
+impl LexerTrait for Lexer {
+  fn pub bytes -> ref Bytes {
+    @bytes
+  }
+
+  fn pub offset -> Int {
+    @index
+  }
+
+  fn pub mut advance {
+    @index += 1
+  }
+}

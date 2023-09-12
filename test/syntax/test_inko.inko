@@ -1,0 +1,123 @@
+import std.test.Tests
+import syntax.Token
+import syntax.inko.Lexer
+
+fn lex(input: String) -> Array[Token] {
+  Lexer.new(input).to_array
+}
+
+fn pub tests(t: mut Tests) {
+  t.test('Strings') fn (t) {
+    t.equal(lex('""'), [Token.DoubleString('""')])
+    t.equal(lex('"foo"'), [Token.DoubleString('"foo"')])
+    t.equal(lex('"a\\"b"'), [Token.DoubleString('"a\\"b"')])
+    t.equal(lex("''"), [Token.SingleString("''")])
+    t.equal(lex("'foo'"), [Token.SingleString("'foo'")])
+    t.equal(lex("'a\\'b'"), [Token.SingleString("'a\\'b'")])
+  }
+
+  t.test('Comments') fn (t) {
+    t.equal(lex('#'), [Token.Comment('#')])
+    t.equal(lex('# abc'), [Token.Comment('# abc')])
+    t.equal(lex("# abc\n"), [Token.Comment('# abc'), Token.Text("\n")])
+  }
+
+  t.test('Numbers') fn (t) {
+    t.equal(lex('10'), [Token.Int('10')])
+    t.equal(lex('1_2'), [Token.Int('1_2')])
+    t.equal(lex('10.2'), [Token.Float('10.2')])
+    t.equal(lex('10e2'), [Token.Float('10e2')])
+    t.equal(lex('10E2'), [Token.Float('10E2')])
+    t.equal(lex('10e+2'), [Token.Float('10e+2')])
+    t.equal(lex('10E+2'), [Token.Float('10E+2')])
+    t.equal(lex('10e-2'), [Token.Float('10e-2')])
+    t.equal(lex('10E-2'), [Token.Float('10E-2')])
+    t.equal(lex('10e+'), [Token.Invalid(3)])
+  }
+
+  t.test('Symbols') fn (t) {
+    t.equal(lex('~'), [Token.Text('~')])
+    t.equal(lex('!'), [Token.Text('!')])
+    t.equal(lex('@'), [Token.Text('@')])
+    t.equal(lex('$'), [Token.Text('$')])
+    t.equal(lex('%'), [Token.Text('%')])
+    t.equal(lex('^'), [Token.Text('^')])
+    t.equal(lex('&'), [Token.Text('&')])
+    t.equal(lex('*'), [Token.Text('*')])
+    t.equal(lex('('), [Token.Text('(')])
+    t.equal(lex(')'), [Token.Text(')')])
+    t.equal(lex('_'), [Token.Text('_')])
+    t.equal(lex('+'), [Token.Text('+')])
+    t.equal(lex('`'), [Token.Text('`')])
+    t.equal(lex('-'), [Token.Text('-')])
+    t.equal(lex('='), [Token.Text('=')])
+    t.equal(lex('{'), [Token.Text('{')])
+    t.equal(lex('}'), [Token.Text('}')])
+    t.equal(lex('['), [Token.Text('[')])
+    t.equal(lex(']'), [Token.Text(']')])
+    t.equal(lex('<'), [Token.Text('<')])
+    t.equal(lex('>'), [Token.Text('>')])
+    t.equal(lex(','), [Token.Text(',')])
+    t.equal(lex('.'), [Token.Text('.')])
+    t.equal(lex('/'), [Token.Text('/')])
+    t.equal(lex('?'), [Token.Text('?')])
+    t.equal(lex('\\'), [Token.Text('\\')])
+    t.equal(lex('|'), [Token.Text('|')])
+  }
+
+  t.test('Identifiers and keywords') fn (t) {
+    t.equal(lex('foo'), [Token.Text('foo')])
+    t.equal(lex('foo?'), [Token.Text('foo?')])
+    t.equal(lex('foo_bar'), [Token.Text('foo_bar')])
+    t.equal(lex('foo10'), [Token.Text('foo10')])
+    t.equal(lex('foo-'), [Token.Text('foo'), Token.Text('-')])
+    t.equal(lex('as'), [Token.Keyword('as')])
+    t.equal(lex('and'), [Token.Keyword('and')])
+    t.equal(lex('async'), [Token.Keyword('async')])
+    t.equal(lex('break'), [Token.Keyword('break')])
+    t.equal(lex('builtin'), [Token.Keyword('builtin')])
+    t.equal(lex('case'), [Token.Keyword('case')])
+    t.equal(lex('class'), [Token.Keyword('class')])
+    t.equal(lex('else'), [Token.Keyword('else')])
+    t.equal(lex('enum'), [Token.Keyword('enum')])
+    t.equal(lex('extern'), [Token.Keyword('extern')])
+    t.equal(lex('false'), [Token.Keyword('false')])
+    t.equal(lex('fn'), [Token.Keyword('fn')])
+    t.equal(lex('for'), [Token.Keyword('for')])
+    t.equal(lex('if'), [Token.Keyword('if')])
+    t.equal(lex('impl'), [Token.Keyword('impl')])
+    t.equal(lex('import'), [Token.Keyword('import')])
+    t.equal(lex('let'), [Token.Keyword('let')])
+    t.equal(lex('loop'), [Token.Keyword('loop')])
+    t.equal(lex('match'), [Token.Keyword('match')])
+    t.equal(lex('move'), [Token.Keyword('move')])
+    t.equal(lex('mut'), [Token.Keyword('mut')])
+    t.equal(lex('next'), [Token.Keyword('next')])
+    t.equal(lex('nil'), [Token.Keyword('nil')])
+    t.equal(lex('or'), [Token.Keyword('or')])
+    t.equal(lex('pub'), [Token.Keyword('pub')])
+    t.equal(lex('recover'), [Token.Keyword('recover')])
+    t.equal(lex('ref'), [Token.Keyword('ref')])
+    t.equal(lex('return'), [Token.Keyword('return')])
+    t.equal(lex('self'), [Token.Keyword('self')])
+    t.equal(lex('static'), [Token.Keyword('static')])
+    t.equal(lex('throw'), [Token.Keyword('throw')])
+    t.equal(lex('trait'), [Token.Keyword('trait')])
+    t.equal(lex('true'), [Token.Keyword('true')])
+    t.equal(lex('try'), [Token.Keyword('try')])
+    t.equal(lex('uni'), [Token.Keyword('uni')])
+    t.equal(lex('while'), [Token.Keyword('while')])
+  }
+
+  t.test('Whitespace') fn (t) {
+    t.equal(lex(' '), [Token.Text(' ')])
+    t.equal(lex("\t"), [Token.Text("\t")])
+    t.equal(lex("\n"), [Token.Text("\n")])
+    t.equal(lex("\r"), [Token.Text("\r")])
+  }
+
+  # TODO: throw a value instead? Having multiple Invalid tokens is weird.
+  t.test('Invalid syntax') fn (t) {
+    t.equal(lex('é'), [Token.Invalid(0), Token.Invalid(1)])
+  }
+}

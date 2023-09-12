@@ -1,0 +1,15 @@
+# Various utility/helper methods for writing lexers.
+let TAB = 9
+let LF = 10
+let CR = 13
+let SPACE = 32
+let ZERO = 48
+let NINE = 57
+
+fn whitespace?(byte: Int) -> Bool {
+  byte == SPACE or byte == CR or byte == LF or byte == TAB
+}
+
+fn digit?(byte: Int) -> Bool {
+  byte >= ZERO and byte <= NINE
+}
