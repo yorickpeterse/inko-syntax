@@ -3,7 +3,7 @@ import std.iter.Iter
 import std.set.Set
 import std.string.Bytes
 import syntax.(EOF, Lexer as LexerTrait, Token)
-import syntax.helpers.(digit?, whitespace?)
+import syntax.helpers.(digit?, multibyte?, whitespace?)
 
 let DQUOTE = 34
 let HASH = 35
@@ -70,20 +70,20 @@ class pub Lexer {
   fn mut string(quote: Int) -> String {
     let start = offset
 
-    advance
+    advance(1)
 
     while current != EOF and current != quote {
-      if current == BSLASH and peek == quote { advance }
+      if current == BSLASH and peek(1) == quote { advance(1) }
 
-      advance
+      advance(1)
     }
 
-    advance
+    advance(1)
     slice(start, offset)
   }
 
   fn mut symbol -> Token {
-    advance
+    advance(1)
     Token.Text(slice(offset - 1, offset))
   }
 
@@ -92,9 +92,9 @@ class pub Lexer {
 
     while offset < bytes.size {
       if letter?(current) or digit?(current) or current == UNDER {
-        advance
+        advance(1)
       } else if current == QUEST {
-        advance
+        advance(1)
         break
       } else {
         break
@@ -105,6 +105,14 @@ class pub Lexer {
       case word if @keywords.contains?(word) -> Token.Keyword(word)
       case word -> Token.Text(word)
     }
+  }
+
+  fn mut multibyte_word -> Token {
+    let start = offset
+
+    while multibyte?(current) { advance(1) }
+
+    Token.Text(slice(start, offset))
   }
 
   fn mut whitespace -> Token {
@@ -128,19 +136,17 @@ class pub Lexer {
 
     match current {
       case PERIOD -> {
-        if digit?(peek).false? { return Token.Int(slice(start, offset - 1)) }
+        if digit?(peek(1)).false? { return Token.Int(slice(start, offset - 1)) }
 
-        advance
+        advance(2)
         digits
         Token.Float(slice(start, offset))
       }
       case LOWER_E or UPPER_E -> {
-        advance
-
-        match current {
-          case PLUS or HYPHEN if digit?(peek) -> advance
-          case byte if digit?(byte) -> advance
-          case _ -> return invalid
+        match peek(1) {
+          case PLUS or HYPHEN if digit?(peek(2)) -> advance(3)
+          case byte if digit?(byte) -> advance(2)
+          case _ -> return Token.Int(slice(start, offset))
         }
 
         digits
@@ -150,8 +156,13 @@ class pub Lexer {
     }
   }
 
+  fn mut single_byte -> Token {
+    advance(1)
+    Token.Text(slice(offset - 1, offset))
+  }
+
   fn mut digits {
-    while digit?(current) or current == UNDER { advance }
+    while digit?(current) or current == UNDER { advance(1) }
   }
 }
 
@@ -165,8 +176,9 @@ impl Iter[Token] for Lexer {
       case byte if symbol?(byte) -> Option.Some(symbol)
       case byte if letter?(byte) -> Option.Some(word)
       case byte if whitespace?(byte) -> Option.Some(whitespace)
+      case byte if multibyte?(byte) -> Option.Some(multibyte_word)
       case EOF -> Option.None
-      case _ -> Option.Some(invalid)
+      case _ -> Option.Some(single_byte)
     }
   }
 }
@@ -180,7 +192,7 @@ impl LexerTrait for Lexer {
     @index
   }
 
-  fn pub mut advance {
-    @index += 1
+  fn pub mut advance(amount: Int) {
+    @index += amount
   }
 }

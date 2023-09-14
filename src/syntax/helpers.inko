@@ -13,3 +13,7 @@ fn whitespace?(byte: Int) -> Bool {
 fn digit?(byte: Int) -> Bool {
   byte >= ZERO and byte <= NINE
 }
+
+fn multibyte?(byte: Int) -> Bool {
+  byte >= 128
+}

@@ -32,7 +32,7 @@ fn pub tests(t: mut Tests) {
     t.equal(lex('10E+2'), [Token.Float('10E+2')])
     t.equal(lex('10e-2'), [Token.Float('10e-2')])
     t.equal(lex('10E-2'), [Token.Float('10E-2')])
-    t.equal(lex('10e+'), [Token.Invalid(3)])
+    t.equal(lex('10e+'), [Token.Int('10'), Token.Text('e'), Token.Text('+')])
   }
 
   t.test('Symbols') fn (t) {
@@ -116,8 +116,14 @@ fn pub tests(t: mut Tests) {
     t.equal(lex("\r"), [Token.Text("\r")])
   }
 
-  # TODO: throw a value instead? Having multiple Invalid tokens is weird.
   t.test('Invalid syntax') fn (t) {
-    t.equal(lex('é'), [Token.Invalid(0), Token.Invalid(1)])
+    t.equal(lex('ééé'), [Token.Text('ééé')])
+    t.equal(lex("\0"), [Token.Text("\0")])
+    t.equal(lex("\u{0001}"), [Token.Text("\u{0001}")])
+  }
+
+  t.test('Constants') fn (t) {
+    t.equal(lex('Foo'), [Token.Text('Foo')])
+    t.equal(lex('Foo_Bar'), [Token.Text('Foo_Bar')])
   }
 }

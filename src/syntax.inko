@@ -13,11 +13,6 @@ let pub EOF = -1
 #
 # A token can be a comment, a string, a keyword, or just regular text.
 class pub enum Token {
-  # A token produced as a result of invalid syntax.
-  #
-  # The wrapped `Int` is the byte offset at which the error is encountered.
-  case Invalid(Int)
-
   # A single or multi-line comment.
   case Comment(String)
 
@@ -46,7 +41,6 @@ class pub enum Token {
 impl Equal[Token] for Token {
   fn pub ==(other: ref Token) -> Bool {
     match (self, other) {
-      case (Invalid(a), Invalid(b)) -> a == b
       case (Comment(a), Comment(b)) -> a == b
       case (DoubleString(a), DoubleString(b)) -> a == b
       case (SingleString(a), SingleString(b)) -> a == b
@@ -63,7 +57,6 @@ impl Equal[Token] for Token {
 impl Format for Token {
   fn pub fmt(formatter: mut Formatter) {
     match self {
-      case Invalid(v) -> formatter.tuple('Invalid').field(v).finish
       case Comment(v) -> formatter.tuple('Comment').field(v).finish
       case DoubleString(v) -> formatter.tuple('DoubleString').field(v).finish
       case SingleString(v) -> formatter.tuple('SingleString').field(v).finish
@@ -85,7 +78,7 @@ trait pub Lexer: Iter[Token] {
   fn pub offset -> Int
 
   # Advances the cursor to the next byte.
-  fn pub mut advance
+  fn pub mut advance(amount: Int)
 
   # Returns the byte at the current byte offset.
   #
@@ -97,8 +90,8 @@ trait pub Lexer: Iter[Token] {
   # Returns the byte at the next byte offset.
   #
   # If all bytes are consumed, this method returns `-1`
-  fn pub peek -> Int {
-    let idx = offset + 1
+  fn pub peek(amount: Int) -> Int {
+    let idx = offset + amount
 
     if idx < bytes.size { bytes.byte(idx) } else { EOF }
   }
@@ -110,18 +103,11 @@ trait pub Lexer: Iter[Token] {
 
   # Advances the byte offset until the end of the current line
   fn pub mut advance_until_eol {
-    while current != EOF and current != LF { advance }
+    while current != EOF and current != LF { advance(1) }
   }
 
   # Advances the byte offset until the first non-whitespace byte.
   fn pub mut advance_whitespace {
-    while whitespace?(current) { advance }
-  }
-
-  # Returns an invalid token for the current offset, and advances the offset to
-  # the next byte.
-  fn pub mut invalid -> Token {
-    advance
-    Token.Invalid(offset - 1)
+    while whitespace?(current) { advance(1) }
   }
 }
