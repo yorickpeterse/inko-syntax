@@ -2,7 +2,6 @@
 import std.cmp.Equal
 import std.fmt.(Format, Formatter)
 import std.iter.Iter
-import std.string.Bytes
 import syntax.helpers.(LF, whitespace?)
 
 # The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
@@ -70,11 +69,11 @@ impl Format for Token {
 }
 
 # A type that represents a bunch of bytes to process using a lexer.
-class Buffer[T: Bytes] {
-  let @bytes: T
+class Buffer {
+  let @bytes: ref ByteArray
   let @offset: Int
 
-  fn static new(bytes: T) -> Buffer[T] {
+  fn static new(bytes: ref ByteArray) -> Buffer {
     Buffer { @bytes = bytes, @offset = 0 }
   }
 

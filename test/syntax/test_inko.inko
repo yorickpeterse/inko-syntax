@@ -3,7 +3,7 @@ import syntax.Token
 import syntax.inko.Lexer
 
 fn lex(input: String) -> Array[Token] {
-  Lexer.new(input).to_array
+  Lexer.new(input.to_byte_array).to_array
 }
 
 fn pub tests(t: mut Tests) {

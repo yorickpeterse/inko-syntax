@@ -1,7 +1,6 @@
 # Lexical analysis of Inko source code.
 import std.iter.Iter
 import std.set.Set
-import std.string.Bytes
 import syntax.(EOF, Buffer, Token)
 import syntax.helpers.(digit?, multibyte?, whitespace?)
 
@@ -42,12 +41,12 @@ fn symbol?(byte: Int) -> Bool {
 }
 
 # A type that turns Inko source code into a stream of tokens.
-class pub Lexer[T: Bytes] {
-  let @buffer: Buffer[T]
+class pub Lexer {
+  let @buffer: Buffer
   let @keywords: Set[String]
 
   # Returns a new `Lexer` that lexes the given input.
-  fn pub static new(bytes: T) -> Lexer[T] {
+  fn pub static new(bytes: ref ByteArray) -> Lexer {
     Lexer {
       @buffer = Buffer.new(bytes),
       @keywords = KEYWORDS.iter.reduce(Set.new) fn (set, kw) {
