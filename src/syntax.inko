@@ -70,11 +70,11 @@ impl Format for Token {
 }
 
 # A type that represents a bunch of bytes to process using a lexer.
-class Buffer {
-  let @bytes: ref Bytes
+class Buffer[T: Bytes] {
+  let @bytes: T
   let @offset: Int
 
-  fn static new(bytes: ref Bytes) -> Buffer {
+  fn static new(bytes: T) -> Buffer[T] {
     Buffer { @bytes = bytes, @offset = 0 }
   }
 
