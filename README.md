@@ -5,7 +5,7 @@ A simple syntax highlighting library for [Inko](https://inko-lang.org), with
 
 # Requirements
 
-- Inko `main` (for now)
+- Inko 0.13.1 or newer
 
 # Installation
 
