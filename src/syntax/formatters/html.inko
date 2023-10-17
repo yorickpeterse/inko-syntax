@@ -1,0 +1,62 @@
+# Formatting of token streams as HTML.
+import builder.html.Document
+import std.iter.Iter
+import std.string.StringBuffer
+import syntax.(Token, TokenKind)
+
+# A type that forms a lexer's token stream as HTML.
+#
+# The generated HTML is compatible with [Pygments](https://pygments.org/)
+# stylesheets.
+class pub Formatter {
+  # Returns a new HTML formatter.
+  fn pub static new -> Formatter {
+    Formatter {}
+  }
+
+  # Formats a token stream as HTML.
+  #
+  # The `language` argument is the name of the language that's highlighted, and
+  # is added as a class to the `pre` element.
+  #
+  # The `source` argument is the input buffer that is tokenized.
+  #
+  # The `tokens` argument is an iterator over the tokens produced from the
+  # `source` buffer.
+  fn pub format[I: mut + Iter[Token]](
+    language: String,
+    source: ref ByteArray,
+    tokens: I,
+  ) -> String {
+    let doc = Document.new
+
+    doc.fragment = true
+
+    let code = doc.pre.attr('class', "highlight {language}").code
+
+    tokens.each fn (tok) {
+      # These classes are taken from
+      # https://github.com/pygments/pygments/blob/8f3bec7982ba52915ee95f34f18e188243364600/pygments/token.py.
+      let span_class = match tok.kind {
+        case Comment -> 'c'
+        case DoubleString -> 's2'
+        case SingleString -> 's1'
+        case Int -> 'mi'
+        case Float -> 'mf'
+        case Keyword -> 'k'
+        case Field -> 'vi'
+        case Text -> ''
+      }
+
+      let text = source.slice(tok.start, tok.size).into_string
+
+      if span_class.size > 0 {
+        code.span.attr('class', span_class).text(text)
+      } else {
+        code.text(text)
+      }
+    }
+
+    doc.to_string
+  }
+}

@@ -1,8 +1,8 @@
 # Lexical analysis of Inko source code.
 import std.iter.Iter
 import std.set.Set
-import syntax.(EOF, Buffer, Token)
-import syntax.helpers.(digit?, multibyte?, whitespace?)
+import syntax.(EOF, Buffer, Token, TokenKind)
+import syntax.helpers.(digit?, letter?, multibyte?, symbol?, whitespace?)
 
 let DQUOTE = 34
 let HASH = 35
@@ -11,14 +11,10 @@ let PLUS = 43
 let HYPHEN = 45
 let PERIOD = 46
 let QUEST = 63
-let UPPER_A = 65
 let UPPER_E = 69
-let UPPER_Z = 90
 let BSLASH = 92
 let UNDER = 95
-let LOWER_A = 97
 let LOWER_E = 101
-let LOWER_Z = 122
 
 let KEYWORDS = [
   'as', 'and', 'async', 'break', 'builtin', 'case', 'class', 'else', 'enum',
@@ -26,19 +22,6 @@ let KEYWORDS = [
   'match', 'move', 'mut', 'next', 'nil', 'or', 'pub', 'recover', 'ref',
   'return', 'self', 'static', 'throw', 'trait', 'true', 'try', 'uni', 'while',
 ]
-
-fn letter?(byte: Int) -> Bool {
-  (byte >= LOWER_A and byte <= LOWER_Z)
-    or (byte >= UPPER_A and byte <= UPPER_Z)
-}
-
-fn symbol?(byte: Int) -> Bool {
-  (byte >= 33 and byte <= 38)
-    or (byte >= 40 and byte <= 47)
-    or (byte >= 60 and byte <= 64)
-    or (byte >= 91 and byte <= 96)
-    or (byte >= 123 and byte <= 126)
-}
 
 # A type that turns Inko source code into a stream of tokens.
 class pub Lexer {
@@ -57,14 +40,14 @@ class pub Lexer {
   }
 
   fn mut single_string -> Token {
-    Token.SingleString(string(SQUOTE))
+    string(TokenKind.SingleString, SQUOTE)
   }
 
   fn mut double_string -> Token {
-    Token.DoubleString(string(DQUOTE))
+    string(TokenKind.DoubleString, DQUOTE)
   }
 
-  fn mut string(quote: Int) -> String {
+  fn mut string(kind: TokenKind, quote: Int) -> Token {
     let start = @buffer.offset
 
     @buffer.offset += 1
@@ -75,12 +58,12 @@ class pub Lexer {
     }
 
     @buffer.offset += 1
-    @buffer.slice(start, @buffer.offset)
+    @buffer.token(kind, start)
   }
 
   fn mut symbol -> Token {
     @buffer.offset += 1
-    Token.Text(@buffer.slice(@buffer.offset - 1, @buffer.offset))
+    @buffer.token(TokenKind.Text, @buffer.offset - 1)
   }
 
   fn mut word -> Token {
@@ -99,10 +82,12 @@ class pub Lexer {
       }
     }
 
-    match @buffer.slice(start, @buffer.offset) {
-      case word if @keywords.contains?(word) -> Token.Keyword(word)
-      case word -> Token.Text(word)
+    let kind = match @buffer.slice(start, @buffer.offset) {
+      case word if @keywords.contains?(word) -> TokenKind.Keyword
+      case _ -> TokenKind.Text
     }
+
+    @buffer.token(kind, start)
   }
 
   fn mut multibyte_word -> Token {
@@ -110,21 +95,21 @@ class pub Lexer {
 
     while multibyte?(@buffer.get) { @buffer.offset += 1 }
 
-    Token.Text(@buffer.slice(start, @buffer.offset))
+    @buffer.token(TokenKind.Text, start)
   }
 
   fn mut whitespace -> Token {
     let start = @buffer.offset
 
     @buffer.advance_whitespace
-    Token.Text(@buffer.slice(start, @buffer.offset))
+    @buffer.token(TokenKind.Text, start)
   }
 
   fn mut line_comment -> Token {
     let start = @buffer.offset
 
     @buffer.advance_until_eol
-    Token.Comment(@buffer.slice(start, @buffer.offset))
+    @buffer.token(TokenKind.Comment, start)
   }
 
   fn mut number -> Token {
@@ -135,30 +120,30 @@ class pub Lexer {
     match @buffer.get {
       case PERIOD -> {
         if digit?(@buffer.peek(1)).false? {
-          return Token.Int(@buffer.slice(start, @buffer.offset - 1))
+          return Token.new(TokenKind.Int, start, @buffer.offset - 1 - start)
         }
 
         @buffer.offset += 2
         digits
-        Token.Float(@buffer.slice(start, @buffer.offset))
+        @buffer.token(TokenKind.Float, start)
       }
       case LOWER_E or UPPER_E -> {
         match @buffer.peek(1) {
           case PLUS or HYPHEN if digit?(@buffer.peek(2)) -> @buffer.offset += 3
           case byte if digit?(byte) -> @buffer.offset += 2
-          case _ -> return Token.Int(@buffer.slice(start, @buffer.offset))
+          case _ -> return @buffer.token(TokenKind.Int, start)
         }
 
         digits
-        Token.Float(@buffer.slice(start, @buffer.offset))
+        @buffer.token(TokenKind.Float, start)
       }
-      case _ -> Token.Int(@buffer.slice(start, @buffer.offset))
+      case _ -> @buffer.token(TokenKind.Int, start)
     }
   }
 
   fn mut single_byte -> Token {
     @buffer.offset += 1
-    Token.Text(@buffer.slice(@buffer.offset - 1, @buffer.offset))
+    @buffer.token(TokenKind.Text, @buffer.offset - 1)
   }
 
   fn mut digits {

@@ -1,6 +1,7 @@
 # A simple syntax highlighting library for Inko.
 import std.cmp.Equal
 import std.fmt.(Format, Formatter)
+import std.hash.(Hash, Hasher)
 import std.iter.Iter
 import syntax.helpers.(LF, whitespace?)
 
@@ -8,63 +9,111 @@ import syntax.helpers.(LF, whitespace?)
 # the input is reached.
 let pub EOF = -1
 
-# A token to highlight.
-#
-# A token can be a comment, a string, a keyword, or just regular text.
-class pub enum Token {
+class pub enum TokenKind {
   # A single or multi-line comment.
-  case Comment(String)
+  case Comment
 
   # A double quoted string.
-  case DoubleString(String)
+  case DoubleString
 
   # A single quoted string.
-  case SingleString(String)
+  case SingleString
 
   # An integer.
-  case Int(String)
+  case Int
 
   # A float (e.g. `10.5` or `10e5`).
-  case Float(String)
+  case Float
 
   # Regular text, such as unrecognized/highlighted words or whitespace.
-  case Text(String)
+  case Text
 
   # A keyword, such as `class`.
-  case Keyword(String)
+  case Keyword
 
   # A reference to a field, such as `self.foo` in Rust or `@foo` in Inko.
-  case Field(String)
+  case Field
 }
 
-impl Equal[Token] for Token {
-  fn pub ==(other: ref Token) -> Bool {
+impl Hash for TokenKind {
+  fn pub hash[H: mut + Hasher](hasher: mut H) {
+    let val = match self {
+      case Comment -> 0
+      case DoubleString -> 1
+      case SingleString -> 2
+      case Int -> 3
+      case Float -> 4
+      case Text -> 5
+      case Keyword -> 6
+      case Field -> 7
+    }
+
+    hasher.write(val)
+  }
+}
+
+impl Equal[TokenKind] for TokenKind {
+  fn pub ==(other: ref TokenKind) -> Bool {
     match (self, other) {
-      case (Comment(a), Comment(b)) -> a == b
-      case (DoubleString(a), DoubleString(b)) -> a == b
-      case (SingleString(a), SingleString(b)) -> a == b
-      case (Int(a), Int(b)) -> a == b
-      case (Float(a), Float(b)) -> a == b
-      case (Text(a), Text(b)) -> a == b
-      case (Keyword(a), Keyword(b)) -> a == b
-      case (Field(a), Field(b)) -> a == b
+      case (Comment, Comment) -> true
+      case (DoubleString, DoubleString) -> true
+      case (SingleString, SingleString) -> true
+      case (Int, Int) -> true
+      case (Float, Float) -> true
+      case (Text, Text) -> true
+      case (Keyword, Keyword) -> true
+      case (Field, Field) -> true
       case _ -> false
     }
   }
 }
 
-impl Format for Token {
+impl Format for TokenKind {
   fn pub fmt(formatter: mut Formatter) {
     match self {
-      case Comment(v) -> formatter.tuple('Comment').field(v).finish
-      case DoubleString(v) -> formatter.tuple('DoubleString').field(v).finish
-      case SingleString(v) -> formatter.tuple('SingleString').field(v).finish
-      case Int(v) -> formatter.tuple('Int').field(v).finish
-      case Float(v) -> formatter.tuple('Float').field(v).finish
-      case Text(v) -> formatter.tuple('Text').field(v).finish
-      case Keyword(v) -> formatter.tuple('Keyword').field(v).finish
-      case Field(v) -> formatter.tuple('Field').field(v).finish
+      case Comment -> formatter.tuple('Comment').finish
+      case DoubleString -> formatter.tuple('DoubleString').finish
+      case SingleString -> formatter.tuple('SingleString').finish
+      case Int -> formatter.tuple('Int').finish
+      case Float -> formatter.tuple('Float').finish
+      case Text -> formatter.tuple('Text').finish
+      case Keyword -> formatter.tuple('Keyword').finish
+      case Field -> formatter.tuple('Field').finish
     }
+  }
+}
+
+# A token to highlight.
+class pub Token {
+  # The kind/type of token.
+  let pub @kind: TokenKind
+
+  # The byte offset the value of the token starts at.
+  let pub @start: Int
+
+  # The number of bytes the value of this token contains.
+  let pub @size: Int
+
+  # Returns a new `Token`.
+  fn pub static new(kind: TokenKind, start: Int, size: Int) -> Token {
+    Token { @kind = kind, @start = start, @size = size }
+  }
+}
+
+impl Equal[Token] for Token {
+  fn pub ==(other: ref Token) -> Bool {
+    @kind == other.kind and @start == other.start and @size == other.size
+  }
+}
+
+impl Format for Token {
+  fn pub fmt(formatter: mut Formatter) {
+    formatter
+      .object('Token')
+      .field('kind', @kind)
+      .field('start', @start)
+      .field('size', @size)
+      .finish
   }
 }
 
@@ -101,5 +150,9 @@ class Buffer {
 
   fn mut advance_whitespace {
     while whitespace?(get) { @offset += 1 }
+  }
+
+  fn token(kind: TokenKind, start: Int) -> Token {
+    Token.new(kind, start, size: @offset - start)
   }
 }

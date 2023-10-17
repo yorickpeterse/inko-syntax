@@ -1,0 +1,19 @@
+import std.test.Tests
+import syntax.formatters.html.Formatter
+import syntax.lexers.inko.Lexer
+
+fn fmt(source: String) -> String {
+  let bytes = source.to_byte_array
+  let lexer = Lexer.new(bytes)
+
+  Formatter.new.format('inko', bytes, lexer)
+}
+
+fn pub tests(t: mut Tests) {
+  t.test('Formatting comments') fn (t) {
+    t.equal(
+      fmt('# abc'),
+      '<pre class="highlight inko"><code><span class="c"># abc</span></code></pre>'
+    )
+  }
+}

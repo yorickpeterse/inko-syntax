@@ -1,0 +1,147 @@
+import std.test.Tests
+import syntax.(Token, TokenKind)
+import syntax.lexers.inko.Lexer
+
+fn lex(input: String) -> Array[Token] {
+  Lexer.new(input.to_byte_array).to_array
+}
+
+fn tok(kind: TokenKind, start: Int, end: Int) -> Token {
+  Token.new(kind, start, end)
+}
+
+fn pub tests(t: mut Tests) {
+  t.test('Strings') fn (t) {
+    t.equal(lex('""'), [tok(TokenKind.DoubleString, 0, 2)])
+    t.equal(lex('"foo"'), [tok(TokenKind.DoubleString, 0, 5)])
+    t.equal(lex('"a\\"b"'), [tok(TokenKind.DoubleString, 0, 6)])
+    t.equal(lex("''"), [tok(TokenKind.SingleString, 0, 2)])
+    t.equal(lex("'foo'"), [tok(TokenKind.SingleString, 0, 5)])
+    t.equal(lex("'a\\'b'"), [tok(TokenKind.SingleString, 0, 6)])
+  }
+
+  t.test('Comments') fn (t) {
+    t.equal(lex('#'), [tok(TokenKind.Comment, 0, 1)])
+    t.equal(lex('# abc'), [tok(TokenKind.Comment, 0, 5)])
+    t.equal(
+      lex("# abc\n"),
+      [tok(TokenKind.Comment, 0, 5), tok(TokenKind.Text, 5, 1)]
+    )
+  }
+
+  t.test('Numbers') fn (t) {
+    t.equal(lex('10'), [tok(TokenKind.Int, 0, 2)])
+    t.equal(lex('1_2'), [tok(TokenKind.Int, 0, 3)])
+    t.equal(lex('10.2'), [tok(TokenKind.Float, 0, 4)])
+    t.equal(lex('10e2'), [tok(TokenKind.Float, 0, 4)])
+    t.equal(lex('10E2'), [tok(TokenKind.Float, 0, 4)])
+    t.equal(lex('10e+2'), [tok(TokenKind.Float, 0, 5)])
+    t.equal(lex('10E+2'), [tok(TokenKind.Float, 0, 5)])
+    t.equal(lex('10e-2'), [tok(TokenKind.Float, 0, 5)])
+    t.equal(lex('10E-2'), [tok(TokenKind.Float, 0, 5)])
+    t.equal(
+      lex('10e+'),
+      [
+        tok(TokenKind.Int, 0, 2),
+        tok(TokenKind.Text, 2, 1),
+        tok(TokenKind.Text, 3, 1),
+      ]
+    )
+  }
+
+  t.test('Symbols') fn (t) {
+    t.equal(lex('~'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('!'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('@'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('$'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('%'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('^'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('&'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('*'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('('), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex(')'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('_'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('+'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('`'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('-'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('='), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('{'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('}'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('['), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex(']'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('<'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('>'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex(','), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('.'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('/'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('?'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('\\'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('|'), [tok(TokenKind.Text, 0, 1)])
+  }
+
+  t.test('Identifiers and keywords') fn (t) {
+    t.equal(lex('foo'), [tok(TokenKind.Text, 0, 3)])
+    t.equal(lex('foo?'), [tok(TokenKind.Text, 0, 4)])
+    t.equal(lex('foo_bar'), [tok(TokenKind.Text, 0, 7)])
+    t.equal(lex('foo10'), [tok(TokenKind.Text, 0, 5)])
+    t.equal(
+      lex('foo-'),
+      [tok(TokenKind.Text, 0, 3), tok(TokenKind.Text, 3, 1)]
+    )
+
+    t.equal(lex('as'), [tok(TokenKind.Keyword, 0, 2)])
+    t.equal(lex('and'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('async'), [tok(TokenKind.Keyword, 0, 5)])
+    t.equal(lex('break'), [tok(TokenKind.Keyword, 0, 5)])
+    t.equal(lex('builtin'), [tok(TokenKind.Keyword, 0, 7)])
+    t.equal(lex('case'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('class'), [tok(TokenKind.Keyword, 0, 5)])
+    t.equal(lex('else'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('enum'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('extern'), [tok(TokenKind.Keyword, 0, 6)])
+    t.equal(lex('false'), [tok(TokenKind.Keyword, 0, 5)])
+    t.equal(lex('fn'), [tok(TokenKind.Keyword, 0, 2)])
+    t.equal(lex('for'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('if'), [tok(TokenKind.Keyword, 0, 2)])
+    t.equal(lex('impl'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('import'), [tok(TokenKind.Keyword, 0, 6)])
+    t.equal(lex('let'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('loop'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('match'), [tok(TokenKind.Keyword, 0, 5)])
+    t.equal(lex('move'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('mut'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('next'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('nil'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('or'), [tok(TokenKind.Keyword, 0, 2)])
+    t.equal(lex('pub'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('recover'), [tok(TokenKind.Keyword, 0, 7)])
+    t.equal(lex('ref'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('return'), [tok(TokenKind.Keyword, 0, 6)])
+    t.equal(lex('self'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('static'), [tok(TokenKind.Keyword, 0, 6)])
+    t.equal(lex('throw'), [tok(TokenKind.Keyword, 0, 5)])
+    t.equal(lex('trait'), [tok(TokenKind.Keyword, 0, 5)])
+    t.equal(lex('true'), [tok(TokenKind.Keyword, 0, 4)])
+    t.equal(lex('try'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('uni'), [tok(TokenKind.Keyword, 0, 3)])
+    t.equal(lex('while'), [tok(TokenKind.Keyword, 0, 5)])
+  }
+
+  t.test('Whitespace') fn (t) {
+    t.equal(lex(' '), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex("\t"), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex("\n"), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex("\r"), [tok(TokenKind.Text, 0, 1)])
+  }
+
+  t.test('Invalid syntax') fn (t) {
+    t.equal(lex('ééé'), [tok(TokenKind.Text, 0, 6)])
+    t.equal(lex("\0"), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex("\u{0001}"), [tok(TokenKind.Text, 0, 1)])
+  }
+
+  t.test('Constants') fn (t) {
+    t.equal(lex('Foo'), [tok(TokenKind.Text, 0, 3)])
+    t.equal(lex('Foo_Bar'), [tok(TokenKind.Text, 0, 7)])
+  }
+}
