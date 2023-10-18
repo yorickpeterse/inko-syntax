@@ -1,0 +1,95 @@
+import std.test.Tests
+import syntax.(Buffer, Syntax, Token, TokenKind, EOF)
+
+fn pub tests(t: mut Tests) {
+  t.test('Buffer.size') fn (t) {
+    let bytes = 'abc'.to_byte_array
+    let buf = Buffer.new(bytes)
+
+    t.equal(buf.size, 3)
+  }
+
+  t.test('Buffer.get') fn (t) {
+    let bytes = 'abc'.to_byte_array
+    let buf = Buffer.new(bytes)
+
+    t.equal(buf.get, 97)
+
+    buf.offset += 1
+    t.equal(buf.get, 98)
+  }
+
+  t.test('Buffer.peek') fn (t) {
+    let bytes = 'abc'.to_byte_array
+    let buf = Buffer.new(bytes)
+
+    t.equal(buf.peek(0), 97)
+    t.equal(buf.get, 97)
+    t.equal(buf.peek(1), 98)
+    t.equal(buf.get, 97)
+    t.equal(buf.peek(200), EOF)
+  }
+
+  t.test('Buffer.slice') fn (t) {
+    let bytes = 'abc'.to_byte_array
+    let buf = Buffer.new(bytes)
+
+    t.equal(buf.slice(start: 0, size: 3), 'abc')
+    t.equal(buf.slice(start: 0, size: 10), 'abc')
+  }
+
+  t.test('Buffer.advance_until_eol') fn (t) {
+    let bytes = "abc\n".to_byte_array
+    let buf = Buffer.new(bytes)
+
+    buf.advance_until_eol
+    t.equal(buf.offset, 3)
+
+    buf.advance_until_eol
+    t.equal(buf.offset, 3)
+  }
+
+  t.test('Buffer.advance_whitespace') fn (t) {
+    let bytes = "a b\tc\rd\ne".to_byte_array
+    let buf = Buffer.new(bytes)
+
+    buf.advance_whitespace
+    t.equal(buf.offset, 0)
+    buf.offset += 1
+    buf.advance_whitespace
+    t.equal(buf.offset, 2)
+
+    buf.offset += 1
+    buf.advance_whitespace
+    t.equal(buf.offset, 4)
+
+    buf.offset += 1
+    buf.advance_whitespace
+    t.equal(buf.offset, 6)
+
+    buf.offset += 1
+    buf.advance_whitespace
+    t.equal(buf.offset, 8)
+  }
+
+  t.test('Buffer.token') fn (t) {
+    let bytes = 'abc'.to_byte_array
+    let buf = Buffer.new(bytes)
+
+    buf.offset += 3
+    t.equal(
+      buf.token(TokenKind.Text, start: 0),
+      Token.new(TokenKind.Text, start: 0, size: 3)
+    )
+  }
+
+  t.test('Syntax.new') fn (t) {
+    t.true(Syntax.new('inko').some?)
+    t.true(Syntax.new('kittens').none?)
+
+    t.equal(
+      Syntax.new('inko').unwrap.highlight('a'.to_byte_array),
+      '<div class="highlight"><pre class="highlight inko"><code>a</code></pre></div>'
+    )
+  }
+}

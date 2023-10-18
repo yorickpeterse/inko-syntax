@@ -1,7 +1,7 @@
 # Lexical analysis of Inko source code.
 import std.iter.Iter
 import std.set.Set
-import syntax.(EOF, Buffer, Token, TokenKind)
+import syntax.(EOF, Buffer, Lexer as LexerTrait, Token, TokenKind)
 import syntax.helpers.(digit?, letter?, multibyte?, symbol?, whitespace?)
 
 let DQUOTE = 34
@@ -72,7 +72,7 @@ class pub Lexer {
 
     advance_word
 
-    let kind = match @buffer.slice(start, @buffer.offset) {
+    let kind = match @buffer.slice(start, @buffer.offset - start) {
       case word if @keywords.contains?(word) -> TokenKind.Keyword
       case _ -> TokenKind.Text
     }
@@ -184,5 +184,15 @@ impl Iter[Token] for Lexer {
       case EOF -> Option.None
       case _ -> Option.Some(single_byte)
     }
+  }
+}
+
+impl LexerTrait for Lexer {
+  fn pub mut buffer -> mut Buffer {
+    @buffer
+  }
+
+  fn pub language_identifier -> String {
+    'inko'
   }
 }

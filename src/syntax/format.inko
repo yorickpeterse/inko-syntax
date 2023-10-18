@@ -2,44 +2,42 @@
 import builder.html.Document
 import std.iter.Iter
 import std.string.StringBuffer
-import syntax.(Token, TokenKind)
+import syntax.(Lexer, Token, TokenKind)
+
+# A type for formatting a token stream into a `String`.
+trait pub Format {
+  # Formats the token stream produced by a `Lexer` into a `String`.
+  #
+  # We list `Iter[Token]` as an explicit requirement here due to
+  # https://github.com/inko-lang/inko/issues/620.
+  fn pub format[I: mut + Lexer + Iter[Token]](lexer: I) -> String
+}
 
 # A type that forms a lexer's token stream as HTML.
 #
 # The generated HTML is compatible with [Pygments](https://pygments.org/)
 # stylesheets.
 class pub Html {
-  # The class to apply to the surrounding div and the <pre> element.
+  # The class to apply to the surrounding `<div>` and `<pre>` elements.
   let pub @class: String
 
   # Returns a new HTML formatter.
   fn pub static new -> Html {
     Html { @class = 'highlight' }
   }
+}
 
-  # Formats a token stream as HTML.
-  #
-  # The `language` argument is the name of the language that's highlighted, and
-  # is added as a class to the `pre` element.
-  #
-  # The `source` argument is the input buffer that is tokenized.
-  #
-  # The `tokens` argument is an iterator over the tokens produced from the
-  # `source` buffer.
-  fn pub format[I: mut + Iter[Token]](
-    language: String,
-    source: ref ByteArray,
-    tokens: I,
-  ) -> String {
+impl Format for Html {
+  fn pub format[I: mut + Lexer + Iter[Token]](lexer: I) -> String {
     let doc = Document.new
     let code = doc
       .div
       .attr('class', @class)
       .pre
-      .attr('class', "{@class} {language}")
+      .attr('class', "{@class} {lexer.language_identifier}")
       .code
 
-    tokens.each fn (tok) {
+    lexer.each fn (tok) {
       # These classes are taken from
       # https://github.com/pygments/pygments/blob/8f3bec7982ba52915ee95f34f18e188243364600/pygments/token.py.
       let cls = match tok.kind {
@@ -55,7 +53,7 @@ class pub Html {
 
       let el = if cls.size > 0 { code.span.attr('class', cls) } else { code }
 
-      el.text(source.slice(tok.start, tok.size).into_string)
+      el.text(lexer.buffer.slice(tok.start, tok.size))
     }
 
     doc.fragment = true

@@ -1,30 +1,15 @@
 # A simple syntax highlighting library for Inko.
 import std.cmp.Equal
-import std.fmt.(Format, Formatter)
+import std.fmt.(Format as Format, Formatter)
 import std.hash.(Hash, Hasher)
 import std.iter.Iter
+import syntax.format
 import syntax.helpers.(LF, whitespace?)
 import syntax.lexers.inko
-import syntax.format.Html
 
 # The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
 # the input is reached.
 let pub EOF = -1
-
-# Returns the lexer to use for the given language.
-#
-# If the name of the language isn't recognized, a `None` is returned.
-#
-# TODO: introduce a proper Lexer type?
-#
-# TODO: what I want is to be able to write something like
-# `Syntax.new('language', bytes).unwrap.to_html`.
-fn pub lexer(language: String, bytes: ref ByteArray) -> Option[Iter[Token]] {
-  match language {
-    case 'inko' -> Option.Some(inko.Lexer.new(bytes) as Iter[Token])
-    case _ -> Option.None
-  }
-}
 
 class pub enum TokenKind {
   # A single or multi-line comment.
@@ -134,42 +119,122 @@ impl Format for Token {
   }
 }
 
-# A type that represents a bunch of bytes to process using a lexer.
-class Buffer {
-  let @bytes: ref ByteArray
-  let @offset: Int
+# A type that turns a buffer into a token stream.
+trait pub Lexer: Iter[Token] {
+  # The buffer to turn into a token stream.
+  fn pub mut buffer -> mut Buffer
 
-  fn static new(bytes: ref ByteArray) -> Buffer {
+  # Returns an identifier describing the name of the language this lexer
+  # processes.
+  #
+  # The name shouldn't contain any spaces, and be suitable for use in e.g. the
+  # "class" attribute of an HTML element.
+  fn pub language_identifier -> String
+}
+
+# A type that represents a bunch of bytes to process using a lexer.
+class pub Buffer {
+  # The bytes that are to be turned into a token stream.
+  let pub @bytes: ref ByteArray
+
+  # The current byte offset.
+  let pub @offset: Int
+
+  # Returns a new `Buffer` that wraps the given `ByteArray`.
+  fn pub static new(bytes: ref ByteArray) -> Buffer {
     Buffer { @bytes = bytes, @offset = 0 }
   }
 
-  fn size -> Int {
+  # Returns the total number of bytes in the buffer.
+  fn pub size -> Int {
     @bytes.size
   }
 
-  fn get -> Int {
+  # Returns the byte at the current byte offset.
+  fn pub get -> Int {
     peek(0)
   }
 
-  fn peek(amount: Int) -> Int {
+  # Returns the byte that is at `amount` bytes relative to the current offset.
+  #
+  # If the offset is out of range, the `EOF` byte is returned.
+  fn pub peek(amount: Int) -> Int {
     let idx = @offset + amount
 
     if idx < @bytes.size { @bytes.byte(idx) } else { EOF }
   }
 
-  fn slice(start: Int, stop: Int) -> String {
-    @bytes.slice(start, stop - start).into_string
+  # Slices the buffer into a substring.
+  fn pub slice(start: Int, size: Int) -> String {
+    @bytes.slice(start, size).into_string
   }
 
-  fn mut advance_until_eol {
+  # Advances the cursor until reaching the end of the current line.
+  fn pub mut advance_until_eol {
     while get != EOF and get != LF { @offset += 1 }
   }
 
-  fn mut advance_whitespace {
+  # Advances the cursor until reaching the first non-whitespace byte.
+  fn pub mut advance_whitespace {
     while whitespace?(get) { @offset += 1 }
   }
 
-  fn token(kind: TokenKind, start: Int) -> Token {
+  # Returns a new token starting at the given offset that ranges until the
+  # current offset.
+  fn pub token(kind: TokenKind, start: Int) -> Token {
     Token.new(kind, start, size: @offset - start)
+  }
+}
+
+# A type used for syntax highlighting a stream of bytes.
+#
+# # Examples
+#
+# A basic example that uses the default settings:
+#
+#     import syntax.Syntax
+#
+#     Syntax.new('inko').unwrap.highlight('# This is a test'.to_byte_array)
+#
+# Using custom settings for the formatter:
+#
+#     import syntax.Syntax
+#     import syntax.format.(Format, Html)
+#
+#     let syntax = Syntax.new('inko').unwrap
+#     let format = Html.new
+#
+#     format.class = 'syntax-highlight'
+#     syntax.format = format as Format
+#     syntax.highlight('# This is a test'.to_byte_array)
+class pub Syntax {
+  # A closure that produces a lexer for the given bytes.
+  #
+  # The lexer is based on the language used to construct this `Syntax` for.
+  let @lexer: fn (ref ByteArray) -> Lexer
+
+  # The format to turn the token stream into.
+  #
+  # This field defaults to `syntax.format.Html`.
+  let pub @format: format.Format
+
+  # Returns a new syntax highlighter for the given language.
+  #
+  # If the language isn't recognized, a `None` is returned.
+  fn pub static new(language: String) -> Option[Syntax] {
+    let lexer = match language {
+      case 'inko' -> fn (in) { inko.Lexer.new(in) as Lexer }
+      case _ -> return Option.None
+    }
+
+    Option.Some(Syntax {
+      @lexer = lexer,
+      @format = format.Html.new as format.Format,
+    })
+  }
+
+  # Syntax highlights the given bytes into a `String`.
+  fn pub mut highlight(bytes: ref ByteArray) -> String {
+    @format.format(@lexer.call(bytes))
   }
 }

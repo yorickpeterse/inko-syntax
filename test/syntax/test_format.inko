@@ -22,7 +22,7 @@ fn pub tests(t: mut Tests) {
       let bytes = pair.0.to_byte_array
 
       t.equal(
-        Html.new.format('inko', bytes, Lexer.new(bytes)),
+        Html.new.format(Lexer.new(bytes)),
         "\
           <div class=\"highlight\">\
             <pre class=\"highlight inko\"><code>{pair.1}</code></pre>\
