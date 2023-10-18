@@ -52,7 +52,6 @@ fn pub tests(t: mut Tests) {
   t.test('Symbols') fn (t) {
     t.equal(lex('~'), [tok(TokenKind.Text, 0, 1)])
     t.equal(lex('!'), [tok(TokenKind.Text, 0, 1)])
-    t.equal(lex('@'), [tok(TokenKind.Text, 0, 1)])
     t.equal(lex('$'), [tok(TokenKind.Text, 0, 1)])
     t.equal(lex('%'), [tok(TokenKind.Text, 0, 1)])
     t.equal(lex('^'), [tok(TokenKind.Text, 0, 1)])
@@ -143,5 +142,14 @@ fn pub tests(t: mut Tests) {
   t.test('Constants') fn (t) {
     t.equal(lex('Foo'), [tok(TokenKind.Text, 0, 3)])
     t.equal(lex('Foo_Bar'), [tok(TokenKind.Text, 0, 7)])
+  }
+
+  t.test('Fields') fn (t) {
+    t.equal(lex('@a'), [tok(TokenKind.Field, 0, 2)])
+    t.equal(lex('@a10'), [tok(TokenKind.Field, 0, 4)])
+    t.equal(lex('@10'), [tok(TokenKind.Field, 0, 3)])
+    t.equal(lex('@class'), [tok(TokenKind.Field, 0, 6)])
+    t.equal(lex('@'), [tok(TokenKind.Text, 0, 1)])
+    t.equal(lex('@+'), [tok(TokenKind.Text, 0, 1), tok(TokenKind.Text, 1, 1)])
   }
 }

@@ -8,10 +8,13 @@ import syntax.(Token, TokenKind)
 #
 # The generated HTML is compatible with [Pygments](https://pygments.org/)
 # stylesheets.
-class pub Formatter {
+class pub Html {
+  # The class to apply to the surrounding div and the <pre> element.
+  let pub @class: String
+
   # Returns a new HTML formatter.
-  fn pub static new -> Formatter {
-    Formatter {}
+  fn pub static new -> Html {
+    Html { @class = 'highlight' }
   }
 
   # Formats a token stream as HTML.
@@ -29,15 +32,17 @@ class pub Formatter {
     tokens: I,
   ) -> String {
     let doc = Document.new
-
-    doc.fragment = true
-
-    let code = doc.pre.attr('class', "highlight {language}").code
+    let code = doc
+      .div
+      .attr('class', @class)
+      .pre
+      .attr('class', "{@class} {language}")
+      .code
 
     tokens.each fn (tok) {
       # These classes are taken from
       # https://github.com/pygments/pygments/blob/8f3bec7982ba52915ee95f34f18e188243364600/pygments/token.py.
-      let span_class = match tok.kind {
+      let cls = match tok.kind {
         case Comment -> 'c'
         case DoubleString -> 's2'
         case SingleString -> 's1'
@@ -48,15 +53,12 @@ class pub Formatter {
         case Text -> ''
       }
 
-      let text = source.slice(tok.start, tok.size).into_string
+      let el = if cls.size > 0 { code.span.attr('class', cls) } else { code }
 
-      if span_class.size > 0 {
-        code.span.attr('class', span_class).text(text)
-      } else {
-        code.text(text)
-      }
+      el.text(source.slice(tok.start, tok.size).into_string)
     }
 
+    doc.fragment = true
     doc.to_string
   }
 }

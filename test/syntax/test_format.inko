@@ -1,0 +1,34 @@
+import std.test.Tests
+import syntax.format.Html
+import syntax.lexers.inko.Lexer
+
+fn pub tests(t: mut Tests) {
+  t.test('Html.format') fn (t) {
+    let tests = [
+      ('# a', '<span class="c"># a</span>'),
+      ('"a"', '<span class="s2">"a"</span>'),
+      ("'a'", '<span class="s1">\'a\'</span>'),
+      ('10', '<span class="mi">10</span>'),
+      ('10.5', '<span class="mf">10.5</span>'),
+      ('class', '<span class="k">class</span>'),
+      ('@a', '<span class="vi">@a</span>'),
+      ('foo', 'foo'),
+      ('áá', 'áá'),
+      ("\n", "\n"),
+      ("# a\n10", "<span class=\"c\"># a</span>\n<span class=\"mi\">10</span>")
+    ]
+
+    tests.into_iter.each fn (pair) {
+      let bytes = pair.0.to_byte_array
+
+      t.equal(
+        Html.new.format('inko', bytes, Lexer.new(bytes)),
+        "\
+          <div class=\"highlight\">\
+            <pre class=\"highlight inko\"><code>{pair.1}</code></pre>\
+          </div>\
+        "
+      )
+    }
+  }
+}

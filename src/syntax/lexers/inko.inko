@@ -11,6 +11,7 @@ let PLUS = 43
 let HYPHEN = 45
 let PERIOD = 46
 let QUEST = 63
+let AT = 64
 let UPPER_E = 69
 let BSLASH = 92
 let UNDER = 95
@@ -69,18 +70,7 @@ class pub Lexer {
   fn mut word -> Token {
     let start = @buffer.offset
 
-    while @buffer.offset < @buffer.size {
-      let cur = @buffer.get
-
-      if letter?(cur) or digit?(cur) or cur == UNDER {
-        @buffer.offset += 1
-      } else if cur == QUEST {
-        @buffer.offset += 1
-        break
-      } else {
-        break
-      }
-    }
+    advance_word
 
     let kind = match @buffer.slice(start, @buffer.offset) {
       case word if @keywords.contains?(word) -> TokenKind.Keyword
@@ -88,6 +78,19 @@ class pub Lexer {
     }
 
     @buffer.token(kind, start)
+  }
+
+  fn mut field -> Token {
+    let start = @buffer.offset
+
+    @buffer.offset += 1
+    advance_word
+
+    if @buffer.offset == (start + 1) {
+      @buffer.token(TokenKind.Text, start)
+    } else {
+      @buffer.token(TokenKind.Field, start)
+    }
   }
 
   fn mut multibyte_word -> Token {
@@ -149,6 +152,21 @@ class pub Lexer {
   fn mut digits {
     while digit?(@buffer.get) or @buffer.get == UNDER { @buffer.offset += 1 }
   }
+
+  fn mut advance_word {
+    while @buffer.offset < @buffer.size {
+      let cur = @buffer.get
+
+      if letter?(cur) or digit?(cur) or cur == UNDER {
+        @buffer.offset += 1
+      } else if cur == QUEST {
+        @buffer.offset += 1
+        break
+      } else {
+        break
+      }
+    }
+  }
 }
 
 impl Iter[Token] for Lexer {
@@ -157,6 +175,7 @@ impl Iter[Token] for Lexer {
       case DQUOTE -> Option.Some(double_string)
       case SQUOTE -> Option.Some(single_string)
       case HASH -> Option.Some(line_comment)
+      case AT -> Option.Some(field)
       case byte if digit?(byte) -> Option.Some(number)
       case byte if symbol?(byte) -> Option.Some(symbol)
       case byte if letter?(byte) -> Option.Some(word)

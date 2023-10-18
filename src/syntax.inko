@@ -4,10 +4,27 @@ import std.fmt.(Format, Formatter)
 import std.hash.(Hash, Hasher)
 import std.iter.Iter
 import syntax.helpers.(LF, whitespace?)
+import syntax.lexers.inko
+import syntax.format.Html
 
 # The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
 # the input is reached.
 let pub EOF = -1
+
+# Returns the lexer to use for the given language.
+#
+# If the name of the language isn't recognized, a `None` is returned.
+#
+# TODO: introduce a proper Lexer type?
+#
+# TODO: what I want is to be able to write something like
+# `Syntax.new('language', bytes).unwrap.to_html`.
+fn pub lexer(language: String, bytes: ref ByteArray) -> Option[Iter[Token]] {
+  match language {
+    case 'inko' -> Option.Some(inko.Lexer.new(bytes) as Iter[Token])
+    case _ -> Option.None
+  }
+}
 
 class pub enum TokenKind {
   # A single or multi-line comment.
