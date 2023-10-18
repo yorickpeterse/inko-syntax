@@ -3,30 +3,30 @@
 A simple syntax highlighting library for [Inko](https://inko-lang.org), with
 [Pygments](https://pygments.org/) compatible HTML output.
 
-# Requirements
+## Requirements
 
 - Inko 0.13.1 or newer
 
-# Installation
+## Installation
 
 ```bash
 inko pkg add github.com/yorickpeterse/inko-syntax 0.1.0
 inko pkg sync
 ```
 
-# Supported languages
+## Supported languages
 
 | Language                       | Identifier | Lexer
 |:-------------------------------|:-----------|:-------------------------------
 | [Inko](https://inko-lang.org/) | `inko`     | `syntax.lexers.inko.Lexer`
 
-# Supported formats
+## Supported formats
 
 | Format                   | Formatter
 |:-------------------------|:---------------------------------
 | Pygments compatible HTML | `syntax.format.Html`
 
-# Usage
+## Usage
 
 A basic example using the default settings:
 
@@ -72,7 +72,7 @@ class async Main {
 }
 ```
 
-# License
+## License
 
 All source code in this repository is licensed under the Mozilla Public License
 version 2.0, unless stated otherwise. A copy of this license can be found in the
