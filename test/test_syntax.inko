@@ -1,5 +1,6 @@
 import std.test.Tests
-import syntax.(Buffer, Syntax, Token, TokenKind, EOF)
+import syntax.(Buffer, Lexer, Lexers, Token, TokenKind, EOF)
+import syntax.lexers.inko
 
 fn pub tests(t: mut Tests) {
   t.test('Buffer.size') fn (t) {
@@ -83,13 +84,24 @@ fn pub tests(t: mut Tests) {
     )
   }
 
-  t.test('Syntax.new') fn (t) {
-    t.true(Syntax.new('inko').some?)
-    t.true(Syntax.new('kittens').none?)
+  t.test('Lexers.create') fn (t) {
+    let lexers = Lexers.new
+    let bytes = '# test'.to_byte_array
+    let lexer = lexers.create('inko', bytes)
 
-    t.equal(
-      Syntax.new('inko').unwrap.highlight('a'.to_byte_array),
-      '<div class="highlight"><pre class="highlight inko"><code>a</code></pre></div>'
-    )
+    t.true(lexer.some?)
+    t.equal(lexer.unwrap.language_identifier, 'inko')
+  }
+
+  t.test('Lexers.add') fn (t) {
+    let lexers = Lexers.new
+    let bytes = '# test'.to_byte_array
+
+    lexers.add('kittens') fn (in) { inko.Lexer.new(in) as Lexer }
+
+    let lexer = lexers.create('kittens', bytes)
+
+    t.true(lexer.some?)
+    t.equal(lexer.unwrap.language_identifier, 'inko')
   }
 }

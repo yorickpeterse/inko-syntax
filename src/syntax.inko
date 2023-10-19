@@ -186,55 +186,58 @@ class pub Buffer {
   }
 }
 
-# A type used for syntax highlighting a stream of bytes.
+# A registry of languages and their lexers.
+#
+# A `Lexers` registry is useful for consumers that want to support multiple
+# languages, without having to map language names to the corresponding lexers
+# themselves.
 #
 # # Examples
 #
-# A basic example that uses the default settings:
+# Creating a registered lexer:
 #
-#     import syntax.Syntax
+#     import syntax.Lexers
 #
-#     Syntax.new('inko').unwrap.highlight('# This is a test'.to_byte_array)
+#     let lexers = Lexers.new
 #
-# Using custom settings for the formatter:
+#     lexers.create('inko', '# test'.to_byte_array).unwrap
 #
-#     import syntax.Syntax
-#     import syntax.format.(Format, Html)
+# Adding a lexer to the registry:
 #
-#     let syntax = Syntax.new('inko').unwrap
-#     let format = Html.new
+#     import syntax.Lexers
+#     import syntax.lexers.inko
 #
-#     format.class = 'syntax-highlight'
-#     syntax.format = format as Format
-#     syntax.highlight('# This is a test'.to_byte_array)
-class pub Syntax {
-  # A closure that produces a lexer for the given bytes.
-  #
-  # The lexer is based on the language used to construct this `Syntax` for.
-  let @lexer: fn (ref ByteArray) -> Lexer
+#     let lexers = Lexers.new
+#
+#     lexers.add('inko') fn (in) { inko.Lexer.new(in) as Lexer }
+class pub Lexers {
+  let @map: Map[String, fn (ref ByteArray) -> Lexer]
 
-  # The format to turn the token stream into.
-  #
-  # This field defaults to `syntax.format.Html`.
-  let pub @format: format.Format
+  # Returns a new lexers registry, containing all default lexers.
+  fn pub static new -> Lexers {
+    let map = Map.new
 
-  # Returns a new syntax highlighter for the given language.
-  #
-  # If the language isn't recognized, a `None` is returned.
-  fn pub static new(language: String) -> Option[Syntax] {
-    let lexer = match language {
-      case 'inko' -> fn (in) { inko.Lexer.new(in) as Lexer }
-      case _ -> return Option.None
-    }
-
-    Option.Some(Syntax {
-      @lexer = lexer,
-      @format = format.Html.new as format.Format,
-    })
+    map.set('inko') fn (in) { inko.Lexer.new(in) as Lexer }
+    Lexers { @map = map }
   }
 
-  # Syntax highlights the given bytes into a `String`.
-  fn pub mut highlight(bytes: ref ByteArray) -> String {
-    @format.format(@lexer.call(bytes))
+  # Registers a new language and lexer.
+  #
+  # Note that the `builder` closure is expected to return a value typed as the
+  # `Lexer` trait. This means you'll need to explicitly cast any lexer _classes_
+  # to the trait using `... as Lexer`.
+  fn pub mut add(language: String, builder: fn (ref ByteArray) -> Lexer) {
+    @map.set(language, builder)
+  }
+
+  # Creates a new lexer for the given language and input.
+  #
+  # The `language` argument specifies the language to create the lexer for. If
+  # the language isn't registered, a `None` is returned.
+  #
+  # The `bytes` argument is an immutable reference to the bytes to turn into a
+  # token stream.
+  fn pub mut create(language: String, bytes: ref ByteArray) -> Option[Lexer] {
+    @map.opt_mut(language).map fn (f) { f.call(bytes) }
   }
 }
