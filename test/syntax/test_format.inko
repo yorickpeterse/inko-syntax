@@ -25,10 +25,47 @@ fn pub tests(t: mut Tests) {
         Html.new.format(Lexer.new(bytes)),
         "\
           <div class=\"highlight\">\
-            <pre class=\"highlight inko\"><code>{pair.1}</code></pre>\
+            <pre class=\"highlight\"><code>{pair.1}</code></pre>\
           </div>\
         "
       )
     }
+  }
+
+  t.test('Html.format without any classes') fn (t) {
+    let bytes = 'a'.to_byte_array
+    let html = Html.new
+
+    html.class = Option.None
+
+    t.equal(
+      html.format(Lexer.new(bytes)),
+      '<div><pre><code>a</code></pre></div>'
+    )
+  }
+
+  t.test('Html.format with just a pre class') fn (t) {
+    let bytes = 'a'.to_byte_array
+    let html = Html.new
+
+    html.class = Option.None
+    html.pre_class = Option.Some('foo')
+
+    t.equal(
+      html.format(Lexer.new(bytes)),
+      '<div><pre class="foo"><code>a</code></pre></div>'
+    )
+  }
+
+  t.test('Html.format with a base and pre class') fn (t) {
+    let bytes = 'a'.to_byte_array
+    let html = Html.new
+
+    html.pre_class = Option.Some('foo')
+
+    t.equal(
+      html.format(Lexer.new(bytes)),
+      '<div class="highlight"><pre class="highlight foo"><code>a</code></pre></div>'
+    )
   }
 }

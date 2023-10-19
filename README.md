@@ -32,23 +32,25 @@ A basic example:
 
 ```inko
 import std.stdio.STDOUT
-import syntax.Lexers
+import syntax.Languages
 import syntax.format.Html
 
 class async Main {
   fn async main {
-    # The `Lexers` type is a registry of the available lexers. This type makes
-    # it easy to create a lexer for a language(s), without having to explicitly
-    # import the underlying lexer(s) into your code.
-    let lexers = Lexers.new
+    # The `Languages` type is a registry of the available languages. This type
+    # makes it easy to create a lexer for a language, without having to
+    # explicitly import the underlying types into your code.
+    let langs = Languages.new
 
-    # Lexers take an immutable reference to a `ByteArray`, so we need to keep it
-    # around until we've produced the token stream.
+    # This gets a language for the given name, returning a `None` if the name
+    # isn't recognized.
+    let lang = langs.for_name('inko').unwrap
+
+    # Now we can create a lexer and format it. Lexers take an immutable
+    # reference to a `ByteArray`, so we need to keep it around until we've
+    # produced the token stream.
     let bytes = '# This is a test'.to_byte_array
-
-    # This creates the lexer for the "inko" language, returning a `None` if the
-    # language isn't registered.
-    let lexer = lexers.create('inko', bytes).unwrap
+    let lexer = lang.lexer(bytes)
 
     # The `Html` formatter takes a lexer and turns it into Pygments compatible
     # HTML.
@@ -62,7 +64,7 @@ class async Main {
 The output of this is the following HTML:
 
 ```html
-<div class="highlight"><pre class="highlight inko"><code><span class="c"># This is a test</span></code></pre></div>
+<div class="highlight"><pre class="highlight"><code><span class="c"># This is a test</span></code></pre></div>
 ```
 
 Here's a more complicated example, showcasing a program that highlights a file
@@ -72,7 +74,7 @@ based on its extension:
 import std.env.(arguments)
 import std.fs.file.ReadOnlyFile
 import std.stdio.STDOUT
-import syntax.Lexers
+import syntax.Languages
 import syntax.format.Html
 
 class async Main {
@@ -94,17 +96,15 @@ class async Main {
     # bit more work as Inko's `Path` type lacks a method to get the file
     # extension (see https://github.com/inko-lang/inko/issues/621 for more
     # details).
-    let lang = tail.byte_index(of: '.', starting_at: 0)
+    let ext = tail.byte_index(of: '.', starting_at: 0)
       .map fn (i) { tail.slice(start: i + 1, size: tail.size).into_string }
-      .expect("the language couldn't be detected")
+      .unwrap_or('')
 
-    # In case the language isn't recognized, we panic. We don't keep the
-    # `Lexers` type around either, because for the sake of this example that's
-    # just not needed.
-    let lexer = Lexers
-      .new
-      .create(lang, bytes)
-      .expect("the language '{lang}' isn't recognized")
+    let langs = Languages.new
+    let lexer = langs
+      .for_extension(ext)
+      .expect("the extension '{ext}' isn't recognized")
+      .lexer(bytes)
 
     out.print(Html.new.format(lexer))
   }

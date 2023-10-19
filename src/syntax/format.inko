@@ -18,24 +18,46 @@ trait pub Format {
 # The generated HTML is compatible with [Pygments](https://pygments.org/)
 # stylesheets.
 class pub Html {
-  # The class to apply to the surrounding `<div>` and `<pre>` elements.
-  let pub @class: String
+  # A base/generic class to apply to the surrounding `<div>` and `<pre>`
+  # elements.
+  #
+  # This field defaults to "highlight".
+  let pub @class: Option[String]
+
+  # An extra class to apply to the `<pre>` element.
+  #
+  # This class can be used to attach a language specific class, such as "bash"
+  # when formatting Bash code.
+  #
+  # By default, no extra class is added.
+  let pub @pre_class: Option[String]
 
   # Returns a new HTML formatter.
   fn pub static new -> Html {
-    Html { @class = 'highlight' }
+    Html { @class = Option.Some('highlight'), @pre_class = Option.None }
   }
 }
 
 impl Format for Html {
   fn pub format[I: mut + Lexer + Iter[Token]](lexer: I) -> String {
     let doc = Document.new
-    let code = doc
-      .div
-      .attr('class', @class)
-      .pre
-      .attr('class', "{@class} {lexer.language_identifier}")
-      .code
+    let div = doc.div
+    let pre = div.pre
+    let code = pre.code
+
+    match (@class, @pre_class) {
+      case (Some(a), Some(b)) -> {
+        div.attr('class', a)
+        pre.attr('class', "{a} {b}")
+        nil
+      }
+      case (Some(a), _) -> {
+        div.attr('class', a)
+        pre.attr('class', a)
+      }
+      case (_, Some(b)) -> pre.attr('class', b)
+      case _ -> {}
+    }
 
     lexer.each fn (tok) {
       # These classes are taken from

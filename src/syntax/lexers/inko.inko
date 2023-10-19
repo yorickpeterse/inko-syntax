@@ -1,7 +1,9 @@
 # Lexical analysis of Inko source code.
 import std.iter.Iter
 import std.set.Set
-import syntax.(EOF, Buffer, Lexer as LexerTrait, Token, TokenKind)
+import syntax.(
+  EOF, Buffer, Language, Lexer as LexerTrait, Languages, Token, TokenKind
+)
 import syntax.helpers.(digit?, letter?, multibyte?, symbol?, whitespace?)
 
 let DQUOTE = 34
@@ -23,6 +25,16 @@ let KEYWORDS = [
   'match', 'move', 'mut', 'next', 'nil', 'or', 'pub', 'recover', 'ref',
   'return', 'self', 'static', 'throw', 'trait', 'true', 'try', 'uni', 'while',
 ]
+
+# Registers the lexer with the lexers registry.
+fn pub register(languages: mut Languages) {
+  languages.add(Language {
+    @name = 'inko',
+    @aliases = [],
+    @extensions = ['inko'],
+    @builder = fn (in) { Lexer.new(in) as LexerTrait }
+  })
+}
 
 # A type that turns Inko source code into a stream of tokens.
 class pub Lexer {
@@ -190,9 +202,5 @@ impl Iter[Token] for Lexer {
 impl LexerTrait for Lexer {
   fn pub mut buffer -> mut Buffer {
     @buffer
-  }
-
-  fn pub language_identifier -> String {
-    'inko'
   }
 }

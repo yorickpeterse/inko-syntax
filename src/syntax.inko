@@ -123,13 +123,34 @@ impl Format for Token {
 trait pub Lexer: Iter[Token] {
   # The buffer to turn into a token stream.
   fn pub mut buffer -> mut Buffer
+}
 
-  # Returns an identifier describing the name of the language this lexer
-  # processes.
+# A type describing a language, such as its file extensions and names.
+class pub Language {
+  # The identifier/primary name of the language.
   #
-  # The name shouldn't contain any spaces, and be suitable for use in e.g. the
-  # "class" attribute of an HTML element.
-  fn pub language_identifier -> String
+  # This name must follow the pattern `/[a-zA-Z0-9_]+/`
+  let pub @name: String
+
+  # Any aliases the language is available under as well.
+  let pub @aliases: Array[String]
+
+  # The file extension(s) (minus the leading dot) of the language.
+  let pub @extensions: Array[String]
+
+  # A closure used for constructing a lexer.
+  #
+  # The closure's argument is the `ByteArray` to turn into a token stream.
+  #
+  # Note that the closure is expected to return a value typed as the `Lexer`
+  # trait. This means you'll need to explicitly cast any lexer _classes_ to the
+  # trait using `... as Lexer`.
+  let pub @builder: fn (ref ByteArray) -> Lexer
+
+  # Creates a new `Lexer` that processes the given `ByteArray`.
+  fn pub mut lexer(bytes: ref ByteArray) -> Lexer {
+    @builder.call(bytes)
+  }
 }
 
 # A type that represents a bunch of bytes to process using a lexer.
@@ -188,56 +209,71 @@ class pub Buffer {
 
 # A registry of languages and their lexers.
 #
-# A `Lexers` registry is useful for consumers that want to support multiple
+# A `Languages` registry is useful for consumers that want to support multiple
 # languages, without having to map language names to the corresponding lexers
 # themselves.
 #
 # # Examples
 #
-# Creating a registered lexer:
+# Getting a language using a name, and creating its lexer:
 #
-#     import syntax.Lexers
+#     import syntax.Languages
 #
-#     let lexers = Lexers.new
+#     let langs = Languages.new
 #
-#     lexers.create('inko', '# test'.to_byte_array).unwrap
+#     langs.for_name('inko').unwrap.create('# test'.to_byte_array)
 #
-# Adding a lexer to the registry:
+# Getting a language using a file extension:
 #
-#     import syntax.Lexers
-#     import syntax.lexers.inko
+#     import syntax.Languages
 #
-#     let lexers = Lexers.new
+#     let langs = Languages.new
 #
-#     lexers.add('inko') fn (in) { inko.Lexer.new(in) as Lexer }
-class pub Lexers {
-  let @map: Map[String, fn (ref ByteArray) -> Lexer]
+#     langs.for_extension('inko').unwrap.create('# test'.to_byte_array)
+class pub Languages {
+  let @aliases: Map[String, mut Language]
+  let @extensions: Map[String, mut Language]
+  let @map: Map[String, Language]
 
-  # Returns a new lexers registry, containing all default lexers.
-  fn pub static new -> Lexers {
-    let map = Map.new
+  # Returns a new registry, containing all default lexers.
+  fn pub static new -> Languages {
+    let langs = empty
 
-    map.set('inko') fn (in) { inko.Lexer.new(in) as Lexer }
-    Lexers { @map = map }
+    inko.register(langs)
+    langs
   }
 
-  # Registers a new language and lexer.
+  # Returns a new empty registry.
   #
-  # Note that the `builder` closure is expected to return a value typed as the
-  # `Lexer` trait. This means you'll need to explicitly cast any lexer _classes_
-  # to the trait using `... as Lexer`.
-  fn pub mut add(language: String, builder: fn (ref ByteArray) -> Lexer) {
-    @map.set(language, builder)
+  # You'll probably want to use `Languages.new` in most cases. This method is
+  # meant for cases where you only want a subset of the available languages, and
+  # are OK with registering them yourself.
+  fn pub static empty -> Languages {
+    Languages {
+      @aliases = Map.new,
+      @extensions = Map.new,
+      @map = Map.new,
+    }
   }
 
-  # Creates a new lexer for the given language and input.
+  # Registers a new language.
+  fn pub mut add(language: Language) {
+    language.aliases.iter.each fn (name) { @aliases.set(name, language) }
+    language.extensions.iter.each fn (name) { @extensions.set(name, language) }
+    @map.set(language.name, language)
+  }
+
+  # Returns the language for the given name.
   #
-  # The `language` argument specifies the language to create the lexer for. If
-  # the language isn't registered, a `None` is returned.
+  # If the name isn't recognized, a `None` is returned.
+  fn pub mut for_name(name: String) -> Option[mut Language] {
+    @map.opt_mut(name).else fn { @aliases.opt_mut(name) }
+  }
+
+  # Returns the language for the given file extension.
   #
-  # The `bytes` argument is an immutable reference to the bytes to turn into a
-  # token stream.
-  fn pub mut create(language: String, bytes: ref ByteArray) -> Option[Lexer] {
-    @map.opt_mut(language).map fn (f) { f.call(bytes) }
+  # If the extension isn't recognized, a `None` is returned.
+  fn pub mut for_extension(name: String) -> Option[mut Language] {
+    @extensions.opt_mut(name)
   }
 }

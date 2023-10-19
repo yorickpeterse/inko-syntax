@@ -1,6 +1,26 @@
+import std.iter.Iter
 import std.test.Tests
-import syntax.(Buffer, Lexer, Lexers, Token, TokenKind, EOF)
-import syntax.lexers.inko
+import syntax.(Buffer, Lexer, Language, Languages, Token, TokenKind, EOF)
+
+class DummyLexer {
+  let @buffer: Buffer
+
+  fn static new(bytes: ref ByteArray) -> DummyLexer {
+    DummyLexer { @buffer = Buffer.new(bytes) }
+  }
+}
+
+impl Iter[Token] for DummyLexer {
+  fn pub mut next -> Option[Token] {
+    Option.None
+  }
+}
+
+impl Lexer for DummyLexer {
+  fn pub mut buffer -> mut Buffer {
+    @buffer
+  }
+}
 
 fn pub tests(t: mut Tests) {
   t.test('Buffer.size') fn (t) {
@@ -84,24 +104,39 @@ fn pub tests(t: mut Tests) {
     )
   }
 
-  t.test('Lexers.create') fn (t) {
-    let lexers = Lexers.new
-    let bytes = '# test'.to_byte_array
-    let lexer = lexers.create('inko', bytes)
+  t.test('Languages.add') fn (t) {
+    let langs = Languages.empty
 
-    t.true(lexer.some?)
-    t.equal(lexer.unwrap.language_identifier, 'inko')
-  }
+    langs.add(Language {
+      @name = 'foo',
+      @aliases = ['bar'],
+      @extensions = ['foo', 'bar'],
+      @builder = fn (in) { DummyLexer.new(in) as Lexer }
+    })
 
-  t.test('Lexers.add') fn (t) {
-    let lexers = Lexers.new
-    let bytes = '# test'.to_byte_array
+    langs.add(Language {
+      @name = 'ruby',
+      @aliases = [],
+      @extensions = ['rb'],
+      @builder = fn (in) { DummyLexer.new(in) as Lexer }
+    })
 
-    lexers.add('kittens') fn (in) { inko.Lexer.new(in) as Lexer }
+    t.true(langs.map.contains?('foo'))
+    t.true(langs.map.contains?('ruby'))
 
-    let lexer = lexers.create('kittens', bytes)
+    t.true(langs.aliases.contains?('bar'))
+    t.false(langs.aliases.contains?('ruby'))
 
-    t.true(lexer.some?)
-    t.equal(lexer.unwrap.language_identifier, 'inko')
+    t.true(langs.extensions.contains?('foo'))
+    t.true(langs.extensions.contains?('bar'))
+    t.true(langs.extensions.contains?('rb'))
+
+    let foo = langs.map.get('foo')
+    let ruby = langs.map.get('ruby')
+
+    t.equal(langs.aliases.get('bar').name, foo.name)
+    t.equal(langs.extensions.get('foo').name, foo.name)
+    t.equal(langs.extensions.get('bar').name, foo.name)
+    t.equal(langs.extensions.get('rb').name, ruby.name)
   }
 }
