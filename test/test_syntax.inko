@@ -1,6 +1,8 @@
 import std.iter.Iter
 import std.test.Tests
-import syntax.(Buffer, Lexer, Language, Languages, Token, TokenKind, EOF)
+import syntax.(
+  Buffer, Keywords, Lexer, Language, Languages, Token, TokenKind, EOF
+)
 
 class DummyLexer {
   let @buffer: Buffer
@@ -104,39 +106,62 @@ fn pub tests(t: mut Tests) {
     )
   }
 
+  t.test('Languages.new') fn (t) {
+    let langs = Languages.new
+
+    t.true(langs.get('inko').some?)
+    t.true(langs.get('shell').some?)
+  }
+
   t.test('Languages.add') fn (t) {
     let langs = Languages.empty
 
     langs.add(Language {
       @name = 'foo',
       @aliases = ['bar'],
-      @extensions = ['foo', 'bar'],
       @builder = fn (in) { DummyLexer.new(in) as Lexer }
     })
 
     langs.add(Language {
       @name = 'ruby',
       @aliases = [],
-      @extensions = ['rb'],
       @builder = fn (in) { DummyLexer.new(in) as Lexer }
     })
 
     t.true(langs.map.contains?('foo'))
     t.true(langs.map.contains?('ruby'))
-
     t.true(langs.aliases.contains?('bar'))
     t.false(langs.aliases.contains?('ruby'))
+  }
 
-    t.true(langs.extensions.contains?('foo'))
-    t.true(langs.extensions.contains?('bar'))
-    t.true(langs.extensions.contains?('rb'))
+  t.test('Languages.get') fn (t) {
+    let langs = Languages.empty
 
-    let foo = langs.map.get('foo')
-    let ruby = langs.map.get('ruby')
+    langs.add(Language {
+      @name = 'foo',
+      @aliases = ['bar'],
+      @builder = fn (in) { DummyLexer.new(in) as Lexer }
+    })
 
-    t.equal(langs.aliases.get('bar').name, foo.name)
-    t.equal(langs.extensions.get('foo').name, foo.name)
-    t.equal(langs.extensions.get('bar').name, foo.name)
-    t.equal(langs.extensions.get('rb').name, ruby.name)
+    t.true(langs.get('foo').some?)
+    t.true(langs.get('bar').some?)
+  }
+
+  t.test('Keywords.contains_range?') fn (t) {
+    let kw = Keywords.new(['foo', 'foobar', 'foofoo', 'fn'])
+
+    t.true(kw.contains_range?('foo'.to_byte_array, 0, 3))
+    t.true(kw.contains_range?('foobar'.to_byte_array, 0, 6))
+    t.true(kw.contains_range?('foofoo'.to_byte_array, 0, 6))
+    t.true(kw.contains_range?('fn'.to_byte_array, 0, 2))
+
+    t.false(kw.contains_range?('a'.to_byte_array, 0, 3))
+    t.false(kw.contains_range?('ab'.to_byte_array, 0, 3))
+    t.false(kw.contains_range?('foobaz'.to_byte_array, 0, 6))
+    t.false(kw.contains_range?('foobarx'.to_byte_array, 0, 7))
+    t.false(kw.contains_range?('fnx'.to_byte_array, 0, 3))
+    t.false(kw.contains_range?(ByteArray.new, 0, 0))
+    t.false(kw.contains_range?(ByteArray.from_array([0]), 0, 1))
+    t.false(kw.contains_range?(ByteArray.from_array([255]), 0, 1))
   }
 }

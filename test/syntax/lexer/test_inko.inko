@@ -1,6 +1,6 @@
 import std.test.Tests
 import syntax.(Token, TokenKind)
-import syntax.lexers.inko.Lexer
+import syntax.lexer.inko.Lexer
 
 fn lex(input: String) -> Array[Token] {
   Lexer.new(input.to_byte_array).to_array

@@ -3,9 +3,11 @@ import std.cmp.Equal
 import std.fmt.(Format as Format, Formatter)
 import std.hash.(Hash, Hasher)
 import std.iter.Iter
+import std.set.Set
 import syntax.format
 import syntax.helpers.(LF, whitespace?)
-import syntax.lexers.inko
+import syntax.lexer.inko
+import syntax.lexer.shell
 
 # The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
 # the input is reached.
@@ -125,18 +127,76 @@ trait pub Lexer: Iter[Token] {
   fn pub mut buffer -> mut Buffer
 }
 
+# A type to efficiently check if certain words are keywords.
+#
+# This type only supports keywords with a minimum size of two bytes. Input
+# smaller than two bytes is never treated as a keyword.
+class pub Keywords {
+  let @words: Set[ByteArray]
+  let @first: ByteArray
+  let @second: ByteArray
+
+  # Returns a new `Keywords` populated using the list of keywords.
+  #
+  # # Examples
+  #
+  #     import syntax.Keywords
+  #
+  #     Keywords.new(['fn', 'class', 'async'])
+  fn pub static new(keywords: ref Array[String]) -> Keywords {
+    let words = Set.new
+    let first = ByteArray.filled(with: 0, times: 255)
+    let second = ByteArray.filled(with: 0, times: 255)
+
+    keywords.iter.select fn (w) { w.size >= 2 }.each fn (word) {
+      let bytes = word.to_byte_array
+
+      first.set(bytes.get(0), 1)
+      second.set(bytes.get(1), 1)
+      words.insert(bytes)
+    }
+
+    Keywords { @words = words, @first = first, @second = second }
+  }
+
+  # Returns true if the range of bytes in `bytes` is a valid keyword.
+  #
+  # In the best case scenario, this method doesn't perform any allocations (e.g.
+  # the first two bytes don't match any known keywords). In the worst case it
+  # slices `bytes` into a subslice and compares that to the known list of
+  # keywords.
+  #
+  # The `bytes` argument is a `ByteArray` (e.g. a reusable buffer) to check.
+  #
+  # The `at` and `size` arguments specify the index to `bytes` and the number of
+  # bytes to check respectively.
+  #
+  # # Examples
+  #
+  #     import syntax.Keywords
+  #
+  #     let kw = Keywords.new(['class', 'async', 'fn'])
+  #     let input = 'class'.to_byte_array
+  #
+  #     kw.contains_range?(input, at: 0, size: input.size) # => true
+  fn pub contains_range?(bytes: ref ByteArray, at: Int, size: Int) -> Bool {
+    size >= 2
+      and @first.get(bytes.get(0)) == 1
+      and @second.get(bytes.get(1)) == 1
+      and @words.contains?(bytes.slice(at, size))
+  }
+}
+
 # A type describing a language, such as its file extensions and names.
 class pub Language {
   # The identifier/primary name of the language.
   #
-  # This name must follow the pattern `/[a-zA-Z0-9_]+/`
+  # This name should be a lowercase alphanumerical name, such that it's valid
+  # for e.g. HTML classes.
   let pub @name: String
 
   # Any aliases the language is available under as well.
   let pub @aliases: Array[String]
-
-  # The file extension(s) (minus the leading dot) of the language.
-  let pub @extensions: Array[String]
 
   # A closure used for constructing a lexer.
   #
@@ -192,12 +252,18 @@ class pub Buffer {
 
   # Advances the cursor until reaching the end of the current line.
   fn pub mut advance_until_eol {
-    while get != EOF and get != LF { @offset += 1 }
+    advance_while fn (b) { b != LF }
   }
 
   # Advances the cursor until reaching the first non-whitespace byte.
   fn pub mut advance_whitespace {
-    while whitespace?(get) { @offset += 1 }
+    advance_while fn (b) { whitespace?(b) }
+  }
+
+  fn pub mut advance_while(condition: fn (Int) -> Bool) {
+    while @offset < @bytes.size and condition.call(@bytes.byte(@offset)) {
+      @offset += 1
+    }
   }
 
   # Returns a new token starting at the given offset that ranges until the
@@ -223,16 +289,15 @@ class pub Buffer {
 #
 #     langs.for_name('inko').unwrap.create('# test'.to_byte_array)
 #
-# Getting a language using a file extension:
+# Getting a language using a file name:
 #
 #     import syntax.Languages
 #
 #     let langs = Languages.new
 #
-#     langs.for_extension('inko').unwrap.create('# test'.to_byte_array)
+#     langs.for_filename('*.inko').unwrap.create('# test'.to_byte_array)
 class pub Languages {
   let @aliases: Map[String, mut Language]
-  let @extensions: Map[String, mut Language]
   let @map: Map[String, Language]
 
   # Returns a new registry, containing all default lexers.
@@ -240,6 +305,7 @@ class pub Languages {
     let langs = empty
 
     inko.register(langs)
+    shell.register(langs)
     langs
   }
 
@@ -249,31 +315,19 @@ class pub Languages {
   # meant for cases where you only want a subset of the available languages, and
   # are OK with registering them yourself.
   fn pub static empty -> Languages {
-    Languages {
-      @aliases = Map.new,
-      @extensions = Map.new,
-      @map = Map.new,
-    }
+    Languages { @aliases = Map.new, @map = Map.new, }
   }
 
   # Registers a new language.
   fn pub mut add(language: Language) {
     language.aliases.iter.each fn (name) { @aliases.set(name, language) }
-    language.extensions.iter.each fn (name) { @extensions.set(name, language) }
     @map.set(language.name, language)
   }
 
   # Returns the language for the given name.
   #
   # If the name isn't recognized, a `None` is returned.
-  fn pub mut for_name(name: String) -> Option[mut Language] {
+  fn pub mut get(name: String) -> Option[mut Language] {
     @map.opt_mut(name).else fn { @aliases.opt_mut(name) }
-  }
-
-  # Returns the language for the given file extension.
-  #
-  # If the extension isn't recognized, a `None` is returned.
-  fn pub mut for_extension(name: String) -> Option[mut Language] {
-    @extensions.opt_mut(name)
   }
 }

@@ -1,8 +1,8 @@
-# Lexical analysis of Inko source code.
+# Lexical analysis of Inko syntax.
 import std.iter.Iter
-import std.set.Set
 import syntax.(
-  EOF, Buffer, Language, Lexer as LexerTrait, Languages, Token, TokenKind
+  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
+  TokenKind
 )
 import syntax.helpers.(digit?, letter?, multibyte?, symbol?, whitespace?)
 
@@ -20,7 +20,7 @@ let UNDER = 95
 let LOWER_E = 101
 
 let KEYWORDS = [
-  'as', 'and', 'async', 'break', 'builtin', 'case', 'class', 'else', 'enum',
+  'and', 'as', 'async', 'break', 'builtin', 'case', 'class', 'else', 'enum',
   'extern', 'false', 'fn', 'for', 'if', 'impl', 'import', 'let', 'loop',
   'match', 'move', 'mut', 'next', 'nil', 'or', 'pub', 'recover', 'ref',
   'return', 'self', 'static', 'throw', 'trait', 'true', 'try', 'uni', 'while',
@@ -31,24 +31,20 @@ fn pub register(languages: mut Languages) {
   languages.add(Language {
     @name = 'inko',
     @aliases = [],
-    @extensions = ['inko'],
     @builder = fn (in) { Lexer.new(in) as LexerTrait }
   })
 }
 
-# A type that turns Inko source code into a stream of tokens.
+# A lexer for Inko syntax.
 class pub Lexer {
   let @buffer: Buffer
-  let @keywords: Set[String]
+  let @keywords: Keywords
 
   # Returns a new `Lexer` that lexes the given input.
   fn pub static new(bytes: ref ByteArray) -> Lexer {
     Lexer {
       @buffer = Buffer.new(bytes),
-      @keywords = KEYWORDS.iter.reduce(Set.new) fn (set, kw) {
-        set.insert(kw)
-        set
-      }
+      @keywords = Keywords.new(KEYWORDS),
     }
   }
 
@@ -64,19 +60,14 @@ class pub Lexer {
     let start = @buffer.offset
 
     @buffer.offset += 1
-
-    while @buffer.get != EOF and @buffer.get != quote {
-      @buffer.offset +=
-        if @buffer.get == BSLASH and @buffer.peek(1) == quote { 2 } else { 1 }
+    @buffer.advance_while fn (b) {
+      if b == quote { return false }
+      if b == BSLASH and @buffer.peek(1) == quote { @buffer.offset += 2 }
+      true
     }
 
     @buffer.offset += 1
     @buffer.token(kind, start)
-  }
-
-  fn mut symbol -> Token {
-    @buffer.offset += 1
-    @buffer.token(TokenKind.Text, @buffer.offset - 1)
   }
 
   fn mut word -> Token {
@@ -84,9 +75,11 @@ class pub Lexer {
 
     advance_word
 
-    let kind = match @buffer.slice(start, @buffer.offset - start) {
-      case word if @keywords.contains?(word) -> TokenKind.Keyword
-      case _ -> TokenKind.Text
+    let size = @buffer.offset - start
+    let kind = if @keywords.contains_range?(@buffer.bytes, start, size) {
+      TokenKind.Keyword
+    } else {
+      TokenKind.Text
     }
 
     @buffer.token(kind, start)
@@ -108,8 +101,7 @@ class pub Lexer {
   fn mut multibyte_word -> Token {
     let start = @buffer.offset
 
-    while multibyte?(@buffer.get) { @buffer.offset += 1 }
-
+    @buffer.advance_while fn (b) { multibyte?(b) }
     @buffer.token(TokenKind.Text, start)
   }
 
@@ -162,21 +154,14 @@ class pub Lexer {
   }
 
   fn mut digits {
-    while digit?(@buffer.get) or @buffer.get == UNDER { @buffer.offset += 1 }
+    @buffer.advance_while fn (b) { digit?(b) or b == UNDER }
   }
 
   fn mut advance_word {
-    while @buffer.offset < @buffer.size {
-      let cur = @buffer.get
-
-      if letter?(cur) or digit?(cur) or cur == UNDER {
-        @buffer.offset += 1
-      } else if cur == QUEST {
-        @buffer.offset += 1
-        break
-      } else {
-        break
-      }
+    @buffer.advance_while fn (b) {
+      if letter?(b) or digit?(b) or b == UNDER  { return true }
+      if b == QUEST { @buffer.offset += 1 }
+      false
     }
   }
 }
@@ -189,7 +174,6 @@ impl Iter[Token] for Lexer {
       case HASH -> Option.Some(line_comment)
       case AT -> Option.Some(field)
       case byte if digit?(byte) -> Option.Some(number)
-      case byte if symbol?(byte) -> Option.Some(symbol)
       case byte if letter?(byte) -> Option.Some(word)
       case byte if whitespace?(byte) -> Option.Some(whitespace)
       case byte if multibyte?(byte) -> Option.Some(multibyte_word)

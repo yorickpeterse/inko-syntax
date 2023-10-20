@@ -3,6 +3,10 @@
 A simple syntax highlighting library for [Inko](https://inko-lang.org), with
 [Pygments](https://pygments.org/) compatible HTML output.
 
+This library focuses solely on syntax highlighting, and doesn't provide any
+means to detect a language/lexer to use according to a file extension, filename,
+MIME type, or the file contents.
+
 ## Requirements
 
 - Inko 0.13.1 or newer
@@ -18,7 +22,7 @@ inko pkg sync
 
 | Language                       | Identifier | Lexer
 |:-------------------------------|:-----------|:-------------------------------
-| [Inko](https://inko-lang.org/) | `inko`     | `syntax.lexers.inko.Lexer`
+| [Inko](https://inko-lang.org/) | `inko`     | `syntax.lexer.inko.Lexer`
 
 ## Supported formats
 
@@ -44,7 +48,7 @@ class async Main {
 
     # This gets a language for the given name, returning a `None` if the name
     # isn't recognized.
-    let lang = langs.for_name('inko').unwrap
+    let lang = langs.get('inko').unwrap
 
     # Now we can create a lexer and format it. Lexers take an immutable
     # reference to a `ByteArray`, so we need to keep it around until we've
@@ -61,54 +65,13 @@ class async Main {
 }
 ```
 
-The output of this is the following HTML:
+The output of this is the following HTML (formatted manually to increase
+readability):
 
 ```html
-<div class="highlight"><pre class="highlight"><code><span class="c"># This is a test</span></code></pre></div>
-```
-
-Here's a more complicated example, showcasing a program that highlights a file
-based on its extension:
-
-```inko
-import std.env.(arguments)
-import std.fs.file.ReadOnlyFile
-import std.stdio.STDOUT
-import syntax.Languages
-import syntax.format.Html
-
-class async Main {
-  fn async main {
-    let out = STDOUT.new
-    let path =
-      arguments.opt(0).expect('a file must be specified as the first argument')
-
-    let bytes = ByteArray.new
-
-    match ReadOnlyFile.new(path).then(fn (f) { f.read_all(bytes) }) {
-      case Ok(_) -> {}
-      case Error(err) -> panic("failed to read {path}: {err}")
-    }
-
-    let tail = path.to_path.tail
-
-    # This determines the language from the file's extension. This requires a
-    # bit more work as Inko's `Path` type lacks a method to get the file
-    # extension (see https://github.com/inko-lang/inko/issues/621 for more
-    # details).
-    let ext = tail.byte_index(of: '.', starting_at: 0)
-      .map fn (i) { tail.slice(start: i + 1, size: tail.size).into_string }
-      .unwrap_or('')
-
-    let langs = Languages.new
-    let lexer = langs
-      .for_extension(ext)
-      .expect("the extension '{ext}' isn't recognized")
-      .lexer(bytes)
-
-    out.print(Html.new.format(lexer))
-  }
-}
+<div class="highlight">
+  <pre class="highlight"><code><span class="c"># This is a test</span></code></pre>
+</div>
 ```
 
 ## License

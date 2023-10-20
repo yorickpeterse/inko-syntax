@@ -1,6 +1,6 @@
 import std.test.Tests
 import syntax.format.Html
-import syntax.lexers.inko.Lexer
+import syntax.lexer.inko.Lexer
 
 fn pub tests(t: mut Tests) {
   t.test('Html.format') fn (t) {

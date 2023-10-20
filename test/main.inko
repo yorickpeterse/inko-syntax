@@ -1,7 +1,7 @@
 import std.env
 import std.test.(Filter, Tests)
 
-import syntax.lexers.test_inko
+import syntax.lexer.test_inko
 import syntax.test_format
 import test_syntax
 
