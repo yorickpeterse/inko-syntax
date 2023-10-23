@@ -5,7 +5,7 @@ import std.hash.(Hash, Hasher)
 import std.iter.Iter
 import std.set.Set
 import syntax.format
-import syntax.helpers.(LF, whitespace?)
+import syntax.helpers.(BSLASH, LF, whitespace?)
 import syntax.lexer.inko
 import syntax.lexer.shell
 
@@ -260,10 +260,60 @@ class pub Buffer {
     advance_while fn (b) { whitespace?(b) }
   }
 
+  # Advances the cursor while the given closure returns `true`.
   fn pub mut advance_while(condition: fn (Int) -> Bool) {
     while @offset < @bytes.size and condition.call(@bytes.byte(@offset)) {
       @offset += 1
     }
+  }
+
+  # Returns a new token that contains all the bytes for which the closure
+  # returns `true`.
+  fn pub mut token_containing(
+    kind: TokenKind,
+    condition: fn (Int) -> Bool,
+  ) -> Token {
+    let start = @offset
+
+    advance_while(condition)
+    token(kind, start)
+  }
+
+  # Returns a new token that contains all bytes until the closing byte,
+  # optionally supporting escaped closing bytes.
+  fn pub mut delimited_token(
+    kind: TokenKind,
+    close: Int,
+    escape: Bool,
+  ) -> Token {
+    let start = @offset
+
+    # Advance over the opening byte.
+    @offset += 1
+
+    advance_while fn (b) {
+      if b == close { return false }
+      if escape and b == BSLASH and peek(1) == close { @offset += 2 }
+      true
+    }
+
+    # Advance over the closing byte.
+    @offset += 1
+
+    token(kind, start)
+  }
+
+  # Returns a new token containing all the bytes until the end of the line.
+  fn pub mut token_line(kind: TokenKind) -> Token {
+    token_containing(kind) fn (b) { b != LF }
+  }
+
+  # Returns a new token including a single (= the current) byte.
+  fn pub mut single_byte_token(kind: TokenKind) -> Token {
+    let start = @offset
+
+    @offset += 1
+    token(TokenKind.Text, start)
   }
 
   # Returns a new token starting at the given offset that ranges until the

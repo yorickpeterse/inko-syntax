@@ -7,6 +7,7 @@ let ZERO = 48
 let NINE = 57
 let UPPER_A = 65
 let UPPER_Z = 90
+let BSLASH = 92
 let LOWER_A = 97
 let LOWER_Z = 122
 

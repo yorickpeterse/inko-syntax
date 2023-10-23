@@ -15,7 +15,6 @@ let PERIOD = 46
 let QUEST = 63
 let AT = 64
 let UPPER_E = 69
-let BSLASH = 92
 let UNDER = 95
 let LOWER_E = 101
 
@@ -49,25 +48,11 @@ class pub Lexer {
   }
 
   fn mut single_string -> Token {
-    string(TokenKind.SingleString, SQUOTE)
+    @buffer.delimited_token(TokenKind.SingleString, SQUOTE, escape: true)
   }
 
   fn mut double_string -> Token {
-    string(TokenKind.DoubleString, DQUOTE)
-  }
-
-  fn mut string(kind: TokenKind, quote: Int) -> Token {
-    let start = @buffer.offset
-
-    @buffer.offset += 1
-    @buffer.advance_while fn (b) {
-      if b == quote { return false }
-      if b == BSLASH and @buffer.peek(1) == quote { @buffer.offset += 2 }
-      true
-    }
-
-    @buffer.offset += 1
-    @buffer.token(kind, start)
+    @buffer.delimited_token(TokenKind.DoubleString, DQUOTE, escape: true)
   }
 
   fn mut word -> Token {
@@ -99,24 +84,15 @@ class pub Lexer {
   }
 
   fn mut multibyte_word -> Token {
-    let start = @buffer.offset
-
-    @buffer.advance_while fn (b) { multibyte?(b) }
-    @buffer.token(TokenKind.Text, start)
+    @buffer.token_containing(TokenKind.Text) fn (b) { multibyte?(b) }
   }
 
   fn mut whitespace -> Token {
-    let start = @buffer.offset
-
-    @buffer.advance_whitespace
-    @buffer.token(TokenKind.Text, start)
+    @buffer.token_containing(TokenKind.Text) fn (b) { whitespace?(b) }
   }
 
   fn mut line_comment -> Token {
-    let start = @buffer.offset
-
-    @buffer.advance_until_eol
-    @buffer.token(TokenKind.Comment, start)
+    @buffer.token_line(TokenKind.Comment)
   }
 
   fn mut number -> Token {
@@ -149,8 +125,7 @@ class pub Lexer {
   }
 
   fn mut single_byte -> Token {
-    @buffer.offset += 1
-    @buffer.token(TokenKind.Text, @buffer.offset - 1)
+    @buffer.single_byte_token(TokenKind.Text)
   }
 
   fn mut digits {
