@@ -4,19 +4,8 @@ import syntax.(
   EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
   TokenKind
 )
-import syntax.helpers.(digit?, letter?, multibyte?, symbol?, whitespace?)
-
-let DQUOTE = 34
-let HASH = 35
-let SQUOTE = 39
-let PLUS = 43
-let HYPHEN = 45
-let PERIOD = 46
-let QUEST = 63
-let AT = 64
-let UPPER_E = 69
-let UNDER = 95
-let LOWER_E = 101
+import syntax.bytes
+import syntax.helpers
 
 let KEYWORDS = [
   'and', 'as', 'async', 'break', 'builtin', 'case', 'class', 'else', 'enum',
@@ -47,14 +36,6 @@ class pub Lexer {
     }
   }
 
-  fn mut single_string -> Token {
-    @buffer.delimited_token(TokenKind.SingleString, SQUOTE, escape: true)
-  }
-
-  fn mut double_string -> Token {
-    @buffer.delimited_token(TokenKind.DoubleString, DQUOTE, escape: true)
-  }
-
   fn mut word -> Token {
     let start = @buffer.offset
 
@@ -83,26 +64,14 @@ class pub Lexer {
     }
   }
 
-  fn mut multibyte_word -> Token {
-    @buffer.token_containing(TokenKind.Text) fn (b) { multibyte?(b) }
-  }
-
-  fn mut whitespace -> Token {
-    @buffer.token_containing(TokenKind.Text) fn (b) { whitespace?(b) }
-  }
-
-  fn mut line_comment -> Token {
-    @buffer.token_line(TokenKind.Comment)
-  }
-
   fn mut number -> Token {
     let start = @buffer.offset
 
     digits
 
     match @buffer.get {
-      case PERIOD -> {
-        if digit?(@buffer.peek(1)).false? {
+      case bytes.PERIOD -> {
+        if bytes.digit?(@buffer.peek(1)).false? {
           return Token.new(TokenKind.Int, start, @buffer.offset - 1 - start)
         }
 
@@ -110,10 +79,12 @@ class pub Lexer {
         digits
         @buffer.token(TokenKind.Float, start)
       }
-      case LOWER_E or UPPER_E -> {
+      case bytes.LOWER_E or bytes.UPPER_E -> {
         match @buffer.peek(1) {
-          case PLUS or HYPHEN if digit?(@buffer.peek(2)) -> @buffer.offset += 3
-          case byte if digit?(byte) -> @buffer.offset += 2
+          case bytes.PLUS or bytes.HYPHEN if bytes.digit?(@buffer.peek(2)) -> {
+            @buffer.offset += 3
+          }
+          case byte if bytes.digit?(byte) -> @buffer.offset += 2
           case _ -> return @buffer.token(TokenKind.Int, start)
         }
 
@@ -124,18 +95,17 @@ class pub Lexer {
     }
   }
 
-  fn mut single_byte -> Token {
-    @buffer.single_byte_token(TokenKind.Text)
-  }
-
   fn mut digits {
-    @buffer.advance_while fn (b) { digit?(b) or b == UNDER }
+    @buffer.advance_while fn (b) { bytes.digit?(b) or b == bytes.UNDER }
   }
 
   fn mut advance_word {
     @buffer.advance_while fn (b) {
-      if letter?(b) or digit?(b) or b == UNDER  { return true }
-      if b == QUEST { @buffer.offset += 1 }
+      if bytes.letter?(b) or bytes.digit?(b) or b == bytes.UNDER  {
+        return true
+      }
+
+      if b == bytes.QUEST { @buffer.offset += 1 }
       false
     }
   }
@@ -144,16 +114,20 @@ class pub Lexer {
 impl Iter[Token] for Lexer {
   fn pub mut next -> Option[Token] {
     match @buffer.get {
-      case DQUOTE -> Option.Some(double_string)
-      case SQUOTE -> Option.Some(single_string)
-      case HASH -> Option.Some(line_comment)
-      case AT -> Option.Some(field)
-      case byte if digit?(byte) -> Option.Some(number)
-      case byte if letter?(byte) -> Option.Some(word)
-      case byte if whitespace?(byte) -> Option.Some(whitespace)
-      case byte if multibyte?(byte) -> Option.Some(multibyte_word)
+      case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
+      case bytes.SQUOTE -> Option.Some(helpers.single_string(@buffer))
+      case bytes.HASH -> Option.Some(helpers.line_comment(@buffer))
+      case bytes.AT -> Option.Some(field)
+      case byte if bytes.digit?(byte) -> Option.Some(number)
+      case byte if bytes.letter?(byte) -> Option.Some(word)
+      case byte if bytes.whitespace?(byte) -> {
+        Option.Some(helpers.whitespace(@buffer))
+      }
+      case byte if bytes.multibyte?(byte) -> {
+        Option.Some(helpers.multi_byte(@buffer))
+      }
       case EOF -> Option.None
-      case _ -> Option.Some(single_byte)
+      case _ -> Option.Some(helpers.single_byte(@buffer))
     }
   }
 }

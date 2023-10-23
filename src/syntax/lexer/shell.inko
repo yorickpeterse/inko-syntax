@@ -4,12 +4,8 @@ import syntax.(
   EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
   TokenKind
 )
-import syntax.helpers.(digit?, letter?, multibyte?, whitespace?)
-
-let DQUOTE = 34
-let HASH = 35
-let SQUOTE = 39
-let UNDER = 95
+import syntax.bytes
+import syntax.helpers
 
 let KEYWORDS = [
   'alias', 'bg', 'bind', 'break', 'builtin', 'caller', 'cd', 'command',
@@ -44,18 +40,12 @@ class pub Lexer {
     }
   }
 
-  fn mut single_string -> Token {
-    @buffer.delimited_token(TokenKind.SingleString, SQUOTE, escape: true)
-  }
-
-  fn mut double_string -> Token {
-    @buffer.delimited_token(TokenKind.DoubleString, DQUOTE, escape: true)
-  }
-
   fn mut word -> Token {
     let start = @buffer.offset
 
-    @buffer.advance_while fn (b) { letter?(b) or digit?(b) or b == UNDER }
+    @buffer.advance_while fn (b) {
+      bytes.letter?(b) or bytes.digit?(b) or b == bytes.UNDER
+    }
 
     let size = @buffer.offset - start
     let kind = if @keywords.contains_range?(@buffer.bytes, start, size) {
@@ -66,40 +56,24 @@ class pub Lexer {
 
     @buffer.token(kind, start)
   }
-
-  fn mut line_comment -> Token {
-    @buffer.token_line(TokenKind.Comment)
-  }
-
-  fn mut number -> Token {
-    @buffer.token_containing(TokenKind.Int) fn (b) { digit?(b) }
-  }
-
-  fn mut whitespace -> Token {
-    @buffer.token_containing(TokenKind.Text) fn (b) { whitespace?(b) }
-  }
-
-  fn mut single_byte -> Token {
-    @buffer.single_byte_token(TokenKind.Text)
-  }
-
-  fn mut multibyte_word -> Token {
-    @buffer.token_containing(TokenKind.Text) fn (b) { multibyte?(b) }
-  }
 }
 
 impl Iter[Token] for Lexer {
   fn pub mut next -> Option[Token] {
     match @buffer.get {
-      case DQUOTE -> Option.Some(double_string)
-      case SQUOTE -> Option.Some(single_string)
-      case HASH -> Option.Some(line_comment)
-      case byte if digit?(byte) -> Option.Some(number)
-      case byte if letter?(byte) -> Option.Some(word)
-      case byte if whitespace?(byte) -> Option.Some(whitespace)
-      case byte if multibyte?(byte) -> Option.Some(multibyte_word)
+      case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
+      case bytes.SQUOTE -> Option.Some(helpers.single_string(@buffer))
+      case bytes.HASH -> Option.Some(helpers.line_comment(@buffer))
+      case byte if bytes.digit?(byte) -> Option.Some(helpers.integer(@buffer))
+      case byte if bytes.letter?(byte) -> Option.Some(word)
+      case byte if bytes.whitespace?(byte) -> {
+        Option.Some(helpers.whitespace(@buffer))
+      }
+      case byte if bytes.multibyte?(byte) -> {
+        Option.Some(helpers.multi_byte(@buffer))
+      }
       case EOF -> Option.None
-      case _ -> Option.Some(single_byte)
+      case _ -> Option.Some(helpers.single_byte(@buffer))
     }
   }
 }

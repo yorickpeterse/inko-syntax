@@ -1,0 +1,50 @@
+# Methods for working with raw bytes in lexers.
+let TAB = 9
+let LF = 10
+let CR = 13
+let SPACE = 32
+let DQUOTE = 34
+let HASH = 35
+let SQUOTE = 39
+let PLUS = 43
+let HYPHEN = 45
+let PERIOD = 46
+let ZERO = 48
+let NINE = 57
+let QUEST = 63
+let AT = 64
+let UPPER_A = 65
+let UPPER_E = 69
+let UPPER_Z = 90
+let BSLASH = 92
+let UNDER = 95
+let LOWER_A = 97
+let LOWER_E = 101
+let LOWER_Z = 122
+
+fn whitespace?(byte: Int) -> Bool {
+  byte == SPACE or byte == CR or byte == LF or byte == TAB
+}
+
+fn digit?(byte: Int) -> Bool {
+  byte >= ZERO and byte <= NINE
+}
+
+fn multibyte?(byte: Int) -> Bool {
+  byte >= 128
+}
+
+# Returns `true` if the byte is a lowercase or uppercase latin character.
+fn letter?(byte: Int) -> Bool {
+  (byte >= LOWER_A and byte <= LOWER_Z)
+    or (byte >= UPPER_A and byte <= UPPER_Z)
+}
+
+# Returns `true` if the byte is a regular symbol, such as `[` or `/`.
+fn symbol?(byte: Int) -> Bool {
+  (byte >= 33 and byte <= 38)
+    or (byte >= 40 and byte <= 47)
+    or (byte >= 60 and byte <= 64)
+    or (byte >= 91 and byte <= 96)
+    or (byte >= 123 and byte <= 126)
+}

@@ -1,39 +1,70 @@
-# Various utility/helper methods for writing lexers.
-let TAB = 9
-let LF = 10
-let CR = 13
-let SPACE = 32
-let ZERO = 48
-let NINE = 57
-let UPPER_A = 65
-let UPPER_Z = 90
-let BSLASH = 92
-let LOWER_A = 97
-let LOWER_Z = 122
+# Methods for parsing bytes into tokens.
+import syntax.(Buffer, Token, TokenKind)
+import syntax.bytes
 
-fn whitespace?(byte: Int) -> Bool {
-  byte == SPACE or byte == CR or byte == LF or byte == TAB
+fn token_containing(
+  buffer: mut Buffer,
+  kind: TokenKind,
+  condition: fn (Int) -> Bool,
+) -> Token {
+  let start = buffer.offset
+
+  buffer.advance_while(condition)
+  buffer.token(kind, start)
 }
 
-fn digit?(byte: Int) -> Bool {
-  byte >= ZERO and byte <= NINE
+fn delimited_token(
+  buffer: mut Buffer,
+  kind: TokenKind,
+  close: Int,
+  escape: Bool,
+) -> Token {
+  let start = buffer.offset
+
+  # Advance over the opening byte.
+  buffer.offset += 1
+
+  buffer.advance_while fn (b) {
+    if b == close { return false }
+    if escape and b == bytes.BSLASH and buffer.peek(1) == close {
+      buffer.offset += 2
+    }
+
+    true
+  }
+
+  # Advance over the closing byte.
+  buffer.offset += 1
+  buffer.token(kind, start)
 }
 
-fn multibyte?(byte: Int) -> Bool {
-  byte >= 128
+fn single_byte(buffer: mut Buffer) -> Token {
+  let start = buffer.offset
+
+  buffer.offset += 1
+  buffer.token(TokenKind.Text, start)
 }
 
-# Returns `true` if the byte is a lowercase or uppercase latin character.
-fn letter?(byte: Int) -> Bool {
-  (byte >= LOWER_A and byte <= LOWER_Z)
-    or (byte >= UPPER_A and byte <= UPPER_Z)
+fn multi_byte(buffer: mut Buffer) -> Token {
+  token_containing(buffer, TokenKind.Text) fn (b) { bytes.multibyte?(b) }
 }
 
-# Returns `true` if the byte is a regular symbol, such as `[` or `/`.
-fn symbol?(byte: Int) -> Bool {
-  (byte >= 33 and byte <= 38)
-    or (byte >= 40 and byte <= 47)
-    or (byte >= 60 and byte <= 64)
-    or (byte >= 91 and byte <= 96)
-    or (byte >= 123 and byte <= 126)
+fn whitespace(buffer: mut Buffer) -> Token {
+  token_containing(buffer, TokenKind.Text) fn (b) { bytes.whitespace?(b) }
+}
+
+fn integer(buffer: mut Buffer) -> Token {
+  token_containing(buffer, TokenKind.Int) fn (b) { bytes.digit?(b) }
+}
+
+fn line_comment(buffer: mut Buffer) -> Token {
+  token_containing(buffer, TokenKind.Comment) fn (b) { b != bytes.LF }
+}
+
+fn single_string(buffer: mut Buffer) -> Token {
+  delimited_token(buffer, TokenKind.SingleString, bytes.SQUOTE, escape: true)
+}
+
+fn double_string(buffer: mut Buffer) -> Token {
+  delimited_token(buffer, TokenKind.DoubleString, bytes.DQUOTE, escape: true)
 }

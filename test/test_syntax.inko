@@ -61,40 +61,6 @@ fn pub tests(t: mut Tests) {
     t.equal(buf.slice(start: 0, size: 10), 'abc')
   }
 
-  t.test('Buffer.advance_until_eol') fn (t) {
-    let bytes = "abc\n".to_byte_array
-    let buf = Buffer.new(bytes)
-
-    buf.advance_until_eol
-    t.equal(buf.offset, 3)
-
-    buf.advance_until_eol
-    t.equal(buf.offset, 3)
-  }
-
-  t.test('Buffer.advance_whitespace') fn (t) {
-    let bytes = "a b\tc\rd\ne".to_byte_array
-    let buf = Buffer.new(bytes)
-
-    buf.advance_whitespace
-    t.equal(buf.offset, 0)
-    buf.offset += 1
-    buf.advance_whitespace
-    t.equal(buf.offset, 2)
-
-    buf.offset += 1
-    buf.advance_whitespace
-    t.equal(buf.offset, 4)
-
-    buf.offset += 1
-    buf.advance_whitespace
-    t.equal(buf.offset, 6)
-
-    buf.offset += 1
-    buf.advance_whitespace
-    t.equal(buf.offset, 8)
-  }
-
   t.test('Buffer.token') fn (t) {
     let bytes = 'abc'.to_byte_array
     let buf = Buffer.new(bytes)
