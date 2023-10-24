@@ -1,6 +1,6 @@
 import std.test.Tests
 import syntax.(Token, TokenKind)
-import syntax.lexer.inko.(KEYWORDS, Lexer)
+import syntax.lexer.ruby.(KEYWORDS, Lexer)
 
 fn lex(input: String) -> Array[Token] {
   Lexer.new(input.to_byte_array).to_array
@@ -78,6 +78,15 @@ fn pub tests(t: mut Tests) {
     KEYWORDS.iter.each fn (kw) {
       t.equal(lex(kw), [Token.new(TokenKind.Keyword, 0, kw.size)])
     }
+
+    t.equal(
+      lex('module Foo'),
+      [
+        Token.new(TokenKind.Keyword, 0, 6),
+        Token.new(TokenKind.Text, 6, 1),
+        Token.new(TokenKind.Text, 7, 3),
+      ]
+    )
   }
 
   t.test('Whitespace') fn (t) {
@@ -98,7 +107,7 @@ fn pub tests(t: mut Tests) {
     t.equal(lex('Foo_Bar'), [Token.new(TokenKind.Text, 0, 7)])
   }
 
-  t.test('Fields') fn (t) {
+  t.test('Instance variables') fn (t) {
     t.equal(lex('@a'), [Token.new(TokenKind.Field, 0, 2)])
     t.equal(lex('@a10'), [Token.new(TokenKind.Field, 0, 4)])
     t.equal(lex('@10'), [Token.new(TokenKind.Field, 0, 3)])
@@ -108,5 +117,38 @@ fn pub tests(t: mut Tests) {
       lex('@+'),
       [Token.new(TokenKind.Text, 0, 1), Token.new(TokenKind.Text, 1, 1)]
     )
+  }
+
+  t.test('Class variables') fn (t) {
+    t.equal(lex('@@a'), [Token.new(TokenKind.Field, 0, 3)])
+    t.equal(lex('@@a10'), [Token.new(TokenKind.Field, 0, 5)])
+    t.equal(lex('@@10'), [Token.new(TokenKind.Field, 0, 4)])
+    t.equal(lex('@@class'), [Token.new(TokenKind.Field, 0, 7)])
+    t.equal(lex('@@'), [Token.new(TokenKind.Text, 0, 2)])
+    t.equal(
+      lex('@@+'),
+      [Token.new(TokenKind.Text, 0, 2), Token.new(TokenKind.Text, 2, 1)]
+    )
+  }
+
+  t.test('Symbols') fn (t) {
+    t.equal(lex(':a'), [Token.new(TokenKind.Symbol, 0, 2)])
+    t.equal(
+      lex(':10'),
+      [Token.new(TokenKind.Text, 0, 1), Token.new(TokenKind.Int, 1, 2)]
+    )
+
+    t.equal(lex(':"abc"'), [Token.new(TokenKind.Symbol, 0, 6)])
+    t.equal(lex(':$EOF'), [Token.new(TokenKind.Symbol, 0, 5)])
+    t.equal(lex(':"a\\"bc"'), [Token.new(TokenKind.Symbol, 0, 8)])
+    t.equal(lex(":'abc'"), [Token.new(TokenKind.Symbol, 0, 6)])
+    t.equal(lex(":'a\\'bc'"), [Token.new(TokenKind.Symbol, 0, 8)])
+  }
+
+  t.test('Percent strings') fn (t) {
+    t.equal(lex('%[abc]'), [Token.new(TokenKind.String, 0, 6)])
+    t.equal(lex('%(abc)'), [Token.new(TokenKind.String, 0, 6)])
+    t.equal(lex('%{abc}'), [Token.new(TokenKind.String, 0, 6)])
+    t.equal(lex('%<abc>'), [Token.new(TokenKind.String, 0, 6)])
   }
 }

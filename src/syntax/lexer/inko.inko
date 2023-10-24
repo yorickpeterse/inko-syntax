@@ -59,41 +59,6 @@ class pub Lexer {
       @buffer.token(TokenKind.Field, start)
     }
   }
-
-  fn mut number -> Token {
-    let start = @buffer.offset
-
-    digits
-
-    match @buffer.get {
-      case bytes.PERIOD -> {
-        if bytes.digit?(@buffer.peek(1)).false? {
-          return Token.new(TokenKind.Int, start, @buffer.offset - 1 - start)
-        }
-
-        @buffer.offset += 2
-        digits
-        @buffer.token(TokenKind.Float, start)
-      }
-      case bytes.LOWER_E or bytes.UPPER_E -> {
-        match @buffer.peek(1) {
-          case bytes.PLUS or bytes.HYPHEN if bytes.digit?(@buffer.peek(2)) -> {
-            @buffer.offset += 3
-          }
-          case byte if bytes.digit?(byte) -> @buffer.offset += 2
-          case _ -> return @buffer.token(TokenKind.Int, start)
-        }
-
-        digits
-        @buffer.token(TokenKind.Float, start)
-      }
-      case _ -> @buffer.token(TokenKind.Int, start)
-    }
-  }
-
-  fn mut digits {
-    @buffer.advance_while fn (b) { bytes.digit?(b) or b == bytes.UNDER }
-  }
 }
 
 impl Iter[Token] for Lexer {
@@ -103,7 +68,9 @@ impl Iter[Token] for Lexer {
       case bytes.SQUOTE -> Option.Some(helpers.single_string(@buffer))
       case bytes.HASH -> Option.Some(helpers.line_comment(@buffer))
       case bytes.AT -> Option.Some(field)
-      case byte if bytes.digit?(byte) -> Option.Some(number)
+      case byte if bytes.digit?(byte) -> {
+        Option.Some(helpers.int_or_float(@buffer))
+      }
       case byte if bytes.letter?(byte) -> Option.Some(word)
       case byte if bytes.whitespace?(byte) -> {
         Option.Some(helpers.whitespace(@buffer))

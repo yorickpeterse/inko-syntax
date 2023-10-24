@@ -8,14 +8,14 @@ fn lex(input: String) -> Array[Token] {
 
 fn pub tests(t: mut Tests) {
   t.test('Strings') fn (t) {
-    t.equal(lex('""'), [Token.new(TokenKind.DoubleString, 0, 2)])
-    t.equal(lex('"foo"'), [Token.new(TokenKind.DoubleString, 0, 5)])
-    t.equal(lex('"a\\"b"'), [Token.new(TokenKind.DoubleString, 0, 6)])
-    t.equal(lex("''"), [Token.new(TokenKind.SingleString, 0, 2)])
-    t.equal(lex("'foo'"), [Token.new(TokenKind.SingleString, 0, 5)])
-    t.equal(lex("'a\\'b'"), [Token.new(TokenKind.SingleString, 0, 6)])
-    t.equal(lex('"a'), [Token.new(TokenKind.DoubleString, 0, 2)])
-    t.equal(lex("'a"), [Token.new(TokenKind.SingleString, 0, 2)])
+    t.equal(lex('""'), [Token.new(TokenKind.String, 0, 2)])
+    t.equal(lex('"foo"'), [Token.new(TokenKind.String, 0, 5)])
+    t.equal(lex('"a\\"b"'), [Token.new(TokenKind.String, 0, 6)])
+    t.equal(lex("''"), [Token.new(TokenKind.String, 0, 2)])
+    t.equal(lex("'foo'"), [Token.new(TokenKind.String, 0, 5)])
+    t.equal(lex("'a\\'b'"), [Token.new(TokenKind.String, 0, 6)])
+    t.equal(lex('"a'), [Token.new(TokenKind.String, 0, 2)])
+    t.equal(lex("'a"), [Token.new(TokenKind.String, 0, 2)])
   }
 
   t.test('Comments') fn (t) {

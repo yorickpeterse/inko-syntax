@@ -6,7 +6,10 @@ import std.iter.Iter
 import std.set.Set
 import syntax.bytes.(BSLASH, LF, whitespace?)
 import syntax.format
+import syntax.lexer.fish
 import syntax.lexer.inko
+import syntax.lexer.make
+import syntax.lexer.ruby
 import syntax.lexer.shell
 
 # The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
@@ -17,11 +20,8 @@ class pub enum TokenKind {
   # A single or multi-line comment.
   case Comment
 
-  # A double quoted string.
-  case DoubleString
-
-  # A single quoted string.
-  case SingleString
+  # A string.
+  case String
 
   # An integer.
   case Int
@@ -37,19 +37,22 @@ class pub enum TokenKind {
 
   # A reference to a field, such as `self.foo` in Rust or `@foo` in Inko.
   case Field
+
+  # A symbol/atom, such as `:foo` in Ruby.
+  case Symbol
 }
 
 impl Hash for TokenKind {
   fn pub hash[H: mut + Hasher](hasher: mut H) {
     let val = match self {
       case Comment -> 0
-      case DoubleString -> 1
-      case SingleString -> 2
-      case Int -> 3
-      case Float -> 4
-      case Text -> 5
-      case Keyword -> 6
-      case Field -> 7
+      case String -> 1
+      case Int -> 2
+      case Float -> 3
+      case Text -> 4
+      case Keyword -> 5
+      case Field -> 6
+      case Symbol -> 7
     }
 
     hasher.write(val)
@@ -60,13 +63,13 @@ impl Equal[TokenKind] for TokenKind {
   fn pub ==(other: ref TokenKind) -> Bool {
     match (self, other) {
       case (Comment, Comment) -> true
-      case (DoubleString, DoubleString) -> true
-      case (SingleString, SingleString) -> true
+      case (String, String) -> true
       case (Int, Int) -> true
       case (Float, Float) -> true
       case (Text, Text) -> true
       case (Keyword, Keyword) -> true
       case (Field, Field) -> true
+      case (Symbol, Symbol) -> true
       case _ -> false
     }
   }
@@ -76,13 +79,13 @@ impl Format for TokenKind {
   fn pub fmt(formatter: mut Formatter) {
     match self {
       case Comment -> formatter.tuple('Comment').finish
-      case DoubleString -> formatter.tuple('DoubleString').finish
-      case SingleString -> formatter.tuple('SingleString').finish
+      case String -> formatter.tuple('String').finish
       case Int -> formatter.tuple('Int').finish
       case Float -> formatter.tuple('Float').finish
       case Text -> formatter.tuple('Text').finish
       case Keyword -> formatter.tuple('Keyword').finish
       case Field -> formatter.tuple('Field').finish
+      case Symbol -> formatter.tuple('Symbol').finish
     }
   }
 }
@@ -171,6 +174,11 @@ class pub Keywords {
   # The `at` and `size` arguments specify the index to `bytes` and the number of
   # bytes to check respectively.
   #
+  # # Panics
+  #
+  # This method panics if `at` or `at + size` is not within the bounds of
+  # `bytes`.
+  #
   # # Examples
   #
   #     import syntax.Keywords
@@ -181,8 +189,8 @@ class pub Keywords {
   #     kw.contains_range?(input, at: 0, size: input.size) # => true
   fn pub contains_range?(bytes: ref ByteArray, at: Int, size: Int) -> Bool {
     size >= 2
-      and @first.get(bytes.get(0)) == 1
-      and @second.get(bytes.get(1)) == 1
+      and @first.get(bytes.get(at)) == 1
+      and @second.get(bytes.get(at + 1)) == 1
       and @words.contains?(bytes.slice(at, size))
   }
 }
@@ -297,6 +305,9 @@ class pub Languages {
 
     inko.register(langs)
     shell.register(langs)
+    fish.register(langs)
+    make.register(langs)
+    ruby.register(langs)
     langs
   }
 

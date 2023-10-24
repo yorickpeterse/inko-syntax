@@ -77,6 +77,9 @@ fn pub tests(t: mut Tests) {
 
     t.true(langs.get('inko').some?)
     t.true(langs.get('shell').some?)
+    t.true(langs.get('fish').some?)
+    t.true(langs.get('make').some?)
+    t.true(langs.get('ruby').some?)
   }
 
   t.test('Languages.add') fn (t) {
@@ -114,13 +117,16 @@ fn pub tests(t: mut Tests) {
   }
 
   t.test('Keywords.contains_range?') fn (t) {
-    let kw = Keywords.new(['foo', 'foobar', 'foofoo', 'fn', 'BLA'])
+    let kw = Keywords
+      .new(['foo', 'foobar', 'foofoo', 'fn', 'BLA', 'module', 'module_foo'])
 
     t.true(kw.contains_range?('foo'.to_byte_array, 0, 3))
     t.true(kw.contains_range?('foobar'.to_byte_array, 0, 6))
     t.true(kw.contains_range?('foofoo'.to_byte_array, 0, 6))
     t.true(kw.contains_range?('fn'.to_byte_array, 0, 2))
     t.true(kw.contains_range?('BLA'.to_byte_array, 0, 3))
+    t.true(kw.contains_range?('module'.to_byte_array, 0, 6))
+    t.true(kw.contains_range?('module_foo'.to_byte_array, 0, 10))
 
     t.false(kw.contains_range?('a'.to_byte_array, 0, 3))
     t.false(kw.contains_range?('ab'.to_byte_array, 0, 3))
@@ -130,5 +136,12 @@ fn pub tests(t: mut Tests) {
     t.false(kw.contains_range?(ByteArray.new, 0, 0))
     t.false(kw.contains_range?(ByteArray.from_array([0]), 0, 1))
     t.false(kw.contains_range?(ByteArray.from_array([255]), 0, 1))
+  }
+
+  t.test('Keywords.contains_range? with a keyword preceded by text') fn (t) {
+    let kw = Keywords.new(['foo'])
+    let buf = 'abc foo'.to_byte_array
+
+    t.true(kw.contains_range?(buf, at: 4, size: 3))
   }
 }

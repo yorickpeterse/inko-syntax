@@ -64,12 +64,12 @@ impl Format for Html {
       # https://github.com/pygments/pygments/blob/8f3bec7982ba52915ee95f34f18e188243364600/pygments/token.py.
       let cls = match tok.kind {
         case Comment -> 'c'
-        case DoubleString -> 's2'
-        case SingleString -> 's1'
+        case String -> 's'
         case Int -> 'mi'
         case Float -> 'mf'
         case Keyword -> 'k'
         case Field -> 'vi'
+        case Symbol -> 'ss'
         case Text -> ''
       }
 

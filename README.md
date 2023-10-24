@@ -25,6 +25,7 @@ inko pkg sync
 | [Fish](https://fishshell.com/)             | `fish`    |
 | [Inko](https://inko-lang.org/)             | `inko`    |
 | [Make](https://www.gnu.org/software/make/) | `make`    |
+| [Ruby](https://www.ruby-lang.org/en/)      | `ruby`    |
 | Shell                                      | `shell`   | `bash`, `sh`, `zsh`, `ksh`
 
 ## Supported formats
