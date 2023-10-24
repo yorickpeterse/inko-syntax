@@ -23,9 +23,12 @@ fn delimited_token(
 
   # Advance over the opening byte.
   buffer.offset += 1
-
   buffer.advance_while fn (b) {
-    if b == close { return false }
+    if b == close {
+      buffer.offset += 1
+      return false
+    }
+
     if escape and b == bytes.BSLASH and buffer.peek(1) == close {
       buffer.offset += 2
     }
@@ -33,8 +36,6 @@ fn delimited_token(
     true
   }
 
-  # Advance over the closing byte.
-  buffer.offset += 1
   buffer.token(kind, start)
 }
 
