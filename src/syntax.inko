@@ -10,6 +10,7 @@ import syntax.lexer.fish
 import syntax.lexer.inko
 import syntax.lexer.make
 import syntax.lexer.ruby
+import syntax.lexer.rust
 import syntax.lexer.shell
 
 # The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
@@ -40,6 +41,9 @@ class pub enum TokenKind {
 
   # A symbol/atom, such as `:foo` in Ruby.
   case Symbol
+
+  # A macro definition or call (i.e. `vec![...]` in Rust or a `#define` in C).
+  case Macro
 }
 
 impl Hash for TokenKind {
@@ -53,6 +57,7 @@ impl Hash for TokenKind {
       case Keyword -> 5
       case Field -> 6
       case Symbol -> 7
+      case Macro -> 8
     }
 
     hasher.write(val)
@@ -70,6 +75,7 @@ impl Equal[TokenKind] for TokenKind {
       case (Keyword, Keyword) -> true
       case (Field, Field) -> true
       case (Symbol, Symbol) -> true
+      case (Macro, Macro) -> true
       case _ -> false
     }
   }
@@ -86,6 +92,7 @@ impl Format for TokenKind {
       case Keyword -> formatter.tuple('Keyword').finish
       case Field -> formatter.tuple('Field').finish
       case Symbol -> formatter.tuple('Symbol').finish
+      case Macro -> formatter.tuple('Macro').finish
     }
   }
 }
@@ -303,11 +310,12 @@ class pub Languages {
   fn pub static new -> Languages {
     let langs = empty
 
-    inko.register(langs)
-    shell.register(langs)
     fish.register(langs)
+    inko.register(langs)
     make.register(langs)
     ruby.register(langs)
+    rust.register(langs)
+    shell.register(langs)
     langs
   }
 

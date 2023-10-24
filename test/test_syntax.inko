@@ -75,11 +75,12 @@ fn pub tests(t: mut Tests) {
   t.test('Languages.new') fn (t) {
     let langs = Languages.new
 
-    t.true(langs.get('inko').some?)
-    t.true(langs.get('shell').some?)
     t.true(langs.get('fish').some?)
+    t.true(langs.get('inko').some?)
     t.true(langs.get('make').some?)
     t.true(langs.get('ruby').some?)
+    t.true(langs.get('rust').some?)
+    t.true(langs.get('shell').some?)
   }
 
   t.test('Languages.add') fn (t) {

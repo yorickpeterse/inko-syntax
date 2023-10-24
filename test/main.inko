@@ -5,6 +5,7 @@ import syntax.lexer.test_fish
 import syntax.lexer.test_inko
 import syntax.lexer.test_make
 import syntax.lexer.test_ruby
+import syntax.lexer.test_rust
 import syntax.lexer.test_shell
 import syntax.test_format
 import test_syntax
@@ -18,6 +19,7 @@ class async Main {
     test_inko.tests(tests)
     test_make.tests(tests)
     test_ruby.tests(tests)
+    test_rust.tests(tests)
     test_shell.tests(tests)
     test_syntax.tests(tests)
 

@@ -34,7 +34,7 @@ fn delimited_token(
     }
 
     if escape and b == bytes.BSLASH and buffer.peek(1) == close {
-      buffer.offset += 2
+      buffer.offset += 1
     }
 
     true

@@ -26,6 +26,7 @@ inko pkg sync
 | [Inko](https://inko-lang.org/)             | `inko`    |
 | [Make](https://www.gnu.org/software/make/) | `make`    |
 | [Ruby](https://www.ruby-lang.org/en/)      | `ruby`    |
+| [Rust](https://www.rust-lang.org/)         | `rust`    |
 | Shell                                      | `shell`   | `bash`, `sh`, `zsh`, `ksh`
 
 ## Supported formats

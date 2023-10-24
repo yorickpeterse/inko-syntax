@@ -1,0 +1,128 @@
+# Lexical analysis of Rust syntax.
+import std.iter.Iter
+import syntax.(
+  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
+  TokenKind
+)
+import syntax.bytes
+import syntax.helpers
+
+let KEYWORDS = [
+  'as', 'async', 'await', 'break', 'const', 'continue', 'crate', 'dyn', 'else',
+  'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in', 'let', 'loop',
+  'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'Self', 'self',
+  'static', 'struct', 'super', 'trait', 'true', 'type', 'union', 'unsafe',
+  'use', 'where', 'while',
+]
+
+# Registers the lexer with the lexers registry.
+fn pub register(languages: mut Languages) {
+  languages.add(Language {
+    @name = 'rust',
+    @aliases = [],
+    @builder = fn (in) { Lexer.new(in) as LexerTrait }
+  })
+}
+
+fn word_byte?(byte: Int) -> Bool {
+  bytes.letter_or_digit?(byte) or byte == bytes.UNDER
+}
+
+# A lexer for Rust syntax.
+class pub Lexer {
+  let @buffer: Buffer
+  let @keywords: Keywords
+
+  # Returns a new `Lexer` that lexes the given input.
+  fn pub static new(bytes: ref ByteArray) -> Lexer {
+    Lexer {
+      @buffer = Buffer.new(bytes),
+      @keywords = Keywords.new(KEYWORDS),
+    }
+  }
+
+  fn mut word -> Token {
+    let token =
+      helpers.text_or_keyword(@buffer, @keywords) fn (b) { word_byte?(b) }
+
+    if @buffer.get == bytes.EXCL {
+      @buffer.offset += 1
+      token.kind = TokenKind.Macro
+      token.size += 1
+    }
+
+    token
+  }
+
+  fn mut comment -> Token {
+    match @buffer.peek(1) {
+      case bytes.SLASH -> helpers.line_comment(@buffer)
+      case bytes.AST -> {
+        let start = @buffer.offset
+
+        @buffer.offset += 2
+        @buffer.advance_while fn (b) {
+          if b == bytes.AST and @buffer.peek(1) == bytes.SLASH {
+            @buffer.offset += 2
+            false
+          } else {
+            true
+          }
+        }
+
+        @buffer.token(TokenKind.Comment, start)
+      }
+      case _ -> helpers.single_byte(@buffer)
+    }
+  }
+
+  fn mut ampersand -> Token {
+    let start = @buffer.offset
+
+    @buffer.offset += 1
+    @buffer.token(TokenKind.Keyword, start)
+  }
+
+  fn mut single_quote -> Token {
+    let start = @buffer.offset
+
+    @buffer.offset += 1
+    @buffer.advance_while fn (b) { word_byte?(b) }
+
+    if @buffer.get == bytes.SQUOTE {
+      @buffer.offset += 1
+      @buffer.token(TokenKind.String, start)
+    } else {
+      @buffer.token(TokenKind.Text, start)
+    }
+  }
+}
+
+impl Iter[Token] for Lexer {
+  fn pub mut next -> Option[Token] {
+    match @buffer.get {
+      case bytes.SQUOTE -> Option.Some(single_quote)
+      case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
+      case bytes.SLASH -> Option.Some(comment)
+      case bytes.AMP -> Option.Some(ampersand)
+      case byte if bytes.digit?(byte) -> {
+        Option.Some(helpers.int_or_float(@buffer))
+      }
+      case byte if bytes.letter?(byte) -> Option.Some(word)
+      case byte if bytes.whitespace?(byte) -> {
+        Option.Some(helpers.whitespace(@buffer))
+      }
+      case byte if bytes.multibyte?(byte) -> {
+        Option.Some(helpers.multi_byte(@buffer))
+      }
+      case EOF -> Option.None
+      case _ -> Option.Some(helpers.single_byte(@buffer))
+    }
+  }
+}
+
+impl LexerTrait for Lexer {
+  fn pub mut buffer -> mut Buffer {
+    @buffer
+  }
+}
