@@ -114,12 +114,13 @@ fn pub tests(t: mut Tests) {
   }
 
   t.test('Keywords.contains_range?') fn (t) {
-    let kw = Keywords.new(['foo', 'foobar', 'foofoo', 'fn'])
+    let kw = Keywords.new(['foo', 'foobar', 'foofoo', 'fn', 'BLA'])
 
     t.true(kw.contains_range?('foo'.to_byte_array, 0, 3))
     t.true(kw.contains_range?('foobar'.to_byte_array, 0, 6))
     t.true(kw.contains_range?('foofoo'.to_byte_array, 0, 6))
     t.true(kw.contains_range?('fn'.to_byte_array, 0, 2))
+    t.true(kw.contains_range?('BLA'.to_byte_array, 0, 3))
 
     t.false(kw.contains_range?('a'.to_byte_array, 0, 3))
     t.false(kw.contains_range?('ab'.to_byte_array, 0, 3))

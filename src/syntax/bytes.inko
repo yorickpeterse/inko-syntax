@@ -34,13 +34,15 @@ fn multibyte?(byte: Int) -> Bool {
   byte >= 128
 }
 
-# Returns `true` if the byte is a lowercase or uppercase latin character.
 fn letter?(byte: Int) -> Bool {
   (byte >= LOWER_A and byte <= LOWER_Z)
     or (byte >= UPPER_A and byte <= UPPER_Z)
 }
 
-# Returns `true` if the byte is a regular symbol, such as `[` or `/`.
+fn letter_or_digit?(byte: Int) -> Bool {
+  letter?(byte) or digit?(byte)
+}
+
 fn symbol?(byte: Int) -> Bool {
   (byte >= 33 and byte <= 38)
     or (byte >= 40 and byte <= 47)

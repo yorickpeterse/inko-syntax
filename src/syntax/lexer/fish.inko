@@ -1,0 +1,88 @@
+# Lexical analysis of Fish syntax.
+import std.iter.Iter
+import syntax.(
+  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
+  TokenKind
+)
+import syntax.bytes
+import syntax.helpers
+
+let KEYWORDS = [
+  'abbr', 'alias', 'and', 'argparse', 'begin', 'bg', 'bind', 'block', 'break',
+  'breakpoint', 'builtin', 'case', 'cd', 'cdh', 'command', 'commandline',
+  'complete', 'contains', 'continue', 'count', 'dirh', 'dirs', 'disown', 'echo',
+  'else', 'emit', 'end', 'eval', 'exec', 'exit', 'false', 'fg', 'fish',
+  'fish_add_path', 'fish_breakpoint_prompt', 'fish_clipboard_copy',
+  'fish_clipboard_paste', 'fish_command_not_found', 'fish_config', 'fish_delta',
+  'fish_git_prompt', 'fish_greeting', 'fish_hg_prompt', 'fish_indent',
+  'fish_is_root_user', 'fish_key_reader', 'fish_mode_prompt', 'fish_opt',
+  'fish_prompt', 'fish_right_prompt', 'fish_status_to_signal',
+  'fish_svn_prompt', 'fish_title', 'fish_update_completions', 'fish_vcs_prompt',
+  'for', 'funced', 'funcsave', 'function', 'functions', 'help', 'history', 'if',
+  'isatty', 'jobs', 'math', 'nextd', 'not', 'open', 'or', 'path', 'popd',
+  'prevd', 'printf', 'prompt_hostname', 'prompt_login', 'prompt_pwd', 'psub',
+  'pushd', 'pwd', 'random', 'read', 'realpath', 'return', 'set', 'set_color',
+  'source', 'status', 'string', 'string-collect', 'string-escape',
+  'string-join', 'string-join0', 'string-length', 'string-lower',
+  'string-match', 'string-pad', 'string-repeat', 'string-replace',
+  'string-shorten', 'string-split', 'string-split0', 'string-sub',
+  'string-trim', 'string-unescape', 'string-upper', 'suspend', 'switch', 'test',
+  'time', 'trap', 'true', 'type', 'ulimit', 'umask', 'vared', 'wait', 'while',
+]
+
+# Registers the lexer with the lexers registry.
+fn pub register(languages: mut Languages) {
+  languages.add(Language {
+    @name = 'fish',
+    @aliases = [],
+    @builder = fn (in) { Lexer.new(in) as LexerTrait }
+  })
+}
+
+# A lexer for the Fish shell (https://fishshell.com/).
+class pub Lexer {
+  let @buffer: Buffer
+  let @keywords: Keywords
+
+  # Returns a new `Lexer` that lexes the given input.
+  fn pub static new(bytes: ref ByteArray) -> Lexer {
+    Lexer {
+      @buffer = Buffer.new(bytes),
+      @keywords = Keywords.new(KEYWORDS),
+    }
+  }
+
+  fn mut word -> Token {
+    helpers.text_or_keyword(@buffer, @keywords) fn (b) {
+      bytes.letter_or_digit?(b)
+        or b == bytes.UNDER
+        or (b == bytes.HYPHEN and bytes.letter_or_digit?(@buffer.peek(1)))
+    }
+  }
+}
+
+impl Iter[Token] for Lexer {
+  fn pub mut next -> Option[Token] {
+    match @buffer.get {
+      case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
+      case bytes.SQUOTE -> Option.Some(helpers.single_string(@buffer))
+      case bytes.HASH -> Option.Some(helpers.line_comment(@buffer))
+      case byte if bytes.digit?(byte) -> Option.Some(helpers.integer(@buffer))
+      case byte if bytes.letter?(byte) -> Option.Some(word)
+      case byte if bytes.whitespace?(byte) -> {
+        Option.Some(helpers.whitespace(@buffer))
+      }
+      case byte if bytes.multibyte?(byte) -> {
+        Option.Some(helpers.multi_byte(@buffer))
+      }
+      case EOF -> Option.None
+      case _ -> Option.Some(helpers.single_byte(@buffer))
+    }
+  }
+}
+
+impl LexerTrait for Lexer {
+  fn pub mut buffer -> mut Buffer {
+    @buffer
+  }
+}

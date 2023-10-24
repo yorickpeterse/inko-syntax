@@ -1,5 +1,5 @@
-# Methods for parsing bytes into tokens.
-import syntax.(Buffer, Token, TokenKind)
+# Methods for turning bytes into tokens.
+import syntax.(Buffer, Keywords, Token, TokenKind)
 import syntax.bytes
 
 fn token_containing(
@@ -68,4 +68,20 @@ fn single_string(buffer: mut Buffer) -> Token {
 
 fn double_string(buffer: mut Buffer) -> Token {
   delimited_token(buffer, TokenKind.DoubleString, bytes.DQUOTE, escape: true)
+}
+
+fn text_or_keyword(
+  buffer: mut Buffer,
+  keywords: ref Keywords,
+  condition: fn (Int) -> Bool,
+) -> Token {
+  let start = buffer.offset
+
+  buffer.advance_while(condition)
+
+  if keywords.contains_range?(buffer.bytes, start, buffer.offset - start) {
+    buffer.token(TokenKind.Keyword, start)
+  } else {
+    buffer.token(TokenKind.Text, start)
+  }
 }

@@ -20,14 +20,17 @@ inko pkg sync
 
 ## Supported languages
 
-| Language                       | Identifier | Lexer
-|:-------------------------------|:-----------|:-------------------------------
-| [Inko](https://inko-lang.org/) | `inko`     | `syntax.lexer.inko.Lexer`
+| Language                                   | Name      | Aliases
+|:-------------------------------------------|:----------|:-------
+| [Fish](https://fishshell.com/)             | `fish`    |
+| [Inko](https://inko-lang.org/)             | `inko`    |
+| [Make](https://www.gnu.org/software/make/) | `make`    |
+| Shell                                      | `shell`   | `bash`, `sh`, `zsh`, `ksh`
 
 ## Supported formats
 
 | Format                   | Formatter
-|:-------------------------|:---------------------------------
+|:-------------------------|:--------------------
 | Pygments compatible HTML | `syntax.format.Html`
 
 ## Usage

@@ -1,4 +1,4 @@
-# Lexical analysis of Bash/shell syntax.
+# Lexical analysis of Make/Makefile syntax.
 import std.iter.Iter
 import syntax.(
   EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
@@ -8,41 +8,56 @@ import syntax.bytes
 import syntax.helpers
 
 let KEYWORDS = [
-  'alias', 'bg', 'bind', 'break', 'builtin', 'caller', 'cd', 'command',
-  'compgen', 'complete', 'continue', 'declare', 'dirs', 'disown', 'do', 'done',
-  'elif', 'else', 'enable', 'esac', 'eval', 'exec', 'exit', 'export', 'false',
-  'fc', 'fg', 'fi', 'for', 'function', 'getopts', 'hash', 'help', 'history',
-  'if', 'in', 'jobs', 'let', 'local', 'logout', 'mapfile', 'popd', 'pushd',
-  'pwd', 'read', 'readonly', 'return', 'select', 'set', 'shift', 'shopt',
-  'source', 'suspend', 'test', 'then', 'time', 'times', 'trap', 'true', 'type',
-  'typeset', 'ulimit', 'umask', 'unalias', 'unset', 'until', 'wait', 'while',
+  'abspath', 'addprefix', 'addsuffix', 'and', 'basename', 'call', 'dir', 'else',
+  'endif', 'error', 'eval', 'export', 'file', 'filter', 'filter-out',
+  'findstring', 'firstword', 'flavor', 'foreach', 'if', 'ifdef', 'ifeq',
+  'ifndef', 'ifneq', 'join', 'lastword', 'notdir', 'or', 'origin', 'patsubst',
+  'realpath', 'shell', 'sort', 'strip', 'subst', 'suffix', 'unexport', 'value',
+  'warning', 'wildcard', 'word', 'wordlist', 'words',
+]
+
+let TARGETS = [
+  '.DEFAULT', '.DELETE_ON_ERROR', '.EXPORT_ALL_VARIABLES', '.IGNORE',
+  '.INTERMEDIATE', '.LOW_RESOLUTION_TIME', '.NOTINTERMEDIATE', '.NOTPARALLEL',
+  '.ONESHELL', '.PHONY', '.POSIX', '.PRECIOUS', '.SECONDARY',
+  '.SECONDEXPANSION', '.SILENT', '.SUFFIXES',
 ]
 
 # Registers the lexer with the lexers registry.
 fn pub register(languages: mut Languages) {
   languages.add(Language {
-    @name = 'shell',
-    @aliases = ['bash', 'sh', 'zsh', 'ksh'],
+    @name = 'make',
+    @aliases = [],
     @builder = fn (in) { Lexer.new(in) as LexerTrait }
   })
 }
 
-# A lexer for common shell syntax, such as Bash and Zsh.
+# A lexer for Make/Makefile syntax.
 class pub Lexer {
   let @buffer: Buffer
   let @keywords: Keywords
+  let @targets: Keywords
 
   # Returns a new `Lexer` that lexes the given input.
   fn pub static new(bytes: ref ByteArray) -> Lexer {
     Lexer {
       @buffer = Buffer.new(bytes),
       @keywords = Keywords.new(KEYWORDS),
+      @targets = Keywords.new(TARGETS),
     }
   }
 
   fn mut word -> Token {
     helpers.text_or_keyword(@buffer, @keywords) fn (b) {
-      bytes.letter_or_digit?(b) or b == bytes.UNDER
+      bytes.letter_or_digit?(b)
+        or b == bytes.UNDER
+        or (b == bytes.HYPHEN and bytes.letter_or_digit?(@buffer.peek(1)))
+    }
+  }
+
+  fn mut target -> Token {
+    helpers.text_or_keyword(@buffer, @targets) fn (b) {
+      bytes.letter?(b) or b == bytes.UNDER or b == bytes.PERIOD
     }
   }
 }
@@ -53,6 +68,7 @@ impl Iter[Token] for Lexer {
       case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
       case bytes.SQUOTE -> Option.Some(helpers.single_string(@buffer))
       case bytes.HASH -> Option.Some(helpers.line_comment(@buffer))
+      case bytes.PERIOD if bytes.letter?(@buffer.peek(1)) -> Option.Some(target)
       case byte if bytes.digit?(byte) -> Option.Some(helpers.integer(@buffer))
       case byte if bytes.letter?(byte) -> Option.Some(word)
       case byte if bytes.whitespace?(byte) -> {

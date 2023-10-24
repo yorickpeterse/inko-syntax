@@ -23,6 +23,12 @@ fn pub register(languages: mut Languages) {
   })
 }
 
+fn word_byte?(buffer: mut Buffer, byte: Int) -> Bool {
+  if bytes.letter_or_digit?(byte) or byte == bytes.UNDER  { return true }
+  if byte == bytes.QUEST { buffer.offset += 1 }
+  false
+}
+
 # A lexer for Inko syntax.
 class pub Lexer {
   let @buffer: Buffer
@@ -37,25 +43,15 @@ class pub Lexer {
   }
 
   fn mut word -> Token {
-    let start = @buffer.offset
-
-    advance_word
-
-    let size = @buffer.offset - start
-    let kind = if @keywords.contains_range?(@buffer.bytes, start, size) {
-      TokenKind.Keyword
-    } else {
-      TokenKind.Text
-    }
-
-    @buffer.token(kind, start)
+    helpers
+      .text_or_keyword(@buffer, @keywords) fn (b) { word_byte?(@buffer, b) }
   }
 
   fn mut field -> Token {
     let start = @buffer.offset
 
     @buffer.offset += 1
-    advance_word
+    @buffer.advance_while fn (b) { word_byte?(@buffer, b) }
 
     if @buffer.offset == (start + 1) {
       @buffer.token(TokenKind.Text, start)
@@ -97,17 +93,6 @@ class pub Lexer {
 
   fn mut digits {
     @buffer.advance_while fn (b) { bytes.digit?(b) or b == bytes.UNDER }
-  }
-
-  fn mut advance_word {
-    @buffer.advance_while fn (b) {
-      if bytes.letter?(b) or bytes.digit?(b) or b == bytes.UNDER  {
-        return true
-      }
-
-      if b == bytes.QUEST { @buffer.offset += 1 }
-      false
-    }
   }
 }
 
