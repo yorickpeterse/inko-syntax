@@ -1,6 +1,7 @@
 import std.env
 import std.test.(Filter, Tests)
 
+import syntax.lexer.test_c
 import syntax.lexer.test_fish
 import syntax.lexer.test_inko
 import syntax.lexer.test_make
@@ -15,6 +16,7 @@ class async Main {
   fn async main {
     let tests = Tests.new
 
+    test_c.tests(tests)
     test_fish.tests(tests)
     test_format.tests(tests)
     test_inko.tests(tests)

@@ -6,6 +6,7 @@ import std.iter.Iter
 import std.set.Set
 import syntax.bytes.(BSLASH, LF, whitespace?)
 import syntax.format
+import syntax.lexer.c
 import syntax.lexer.fish
 import syntax.lexer.inko
 import syntax.lexer.make
@@ -311,6 +312,7 @@ class pub Languages {
   fn pub static new -> Languages {
     let langs = empty
 
+    c.register(langs)
     fish.register(langs)
     inko.register(langs)
     make.register(langs)
