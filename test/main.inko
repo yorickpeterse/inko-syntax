@@ -7,6 +7,7 @@ import syntax.lexer.test_make
 import syntax.lexer.test_ruby
 import syntax.lexer.test_rust
 import syntax.lexer.test_shell
+import syntax.lexer.test_toml
 import syntax.test_format
 import test_syntax
 
@@ -21,6 +22,7 @@ class async Main {
     test_ruby.tests(tests)
     test_rust.tests(tests)
     test_shell.tests(tests)
+    test_toml.tests(tests)
     test_syntax.tests(tests)
 
     tests.filter = Filter.from_string(env.arguments.opt(0).unwrap_or(''))

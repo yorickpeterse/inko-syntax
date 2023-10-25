@@ -28,6 +28,7 @@ inko pkg sync
 | [Ruby](https://www.ruby-lang.org/en/)      | `ruby`    |
 | [Rust](https://www.rust-lang.org/)         | `rust`    |
 | Shell                                      | `shell`   | `bash`, `sh`, `zsh`, `ksh`
+| [TOML](https://toml.io/)                   | `toml`    |
 
 ## Supported formats
 

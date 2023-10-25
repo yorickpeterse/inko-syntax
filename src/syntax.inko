@@ -12,6 +12,7 @@ import syntax.lexer.make
 import syntax.lexer.ruby
 import syntax.lexer.rust
 import syntax.lexer.shell
+import syntax.lexer.toml
 
 # The value returned by `Lexer.current` and `Lexer.peek` to signal the end of
 # the input is reached.
@@ -316,6 +317,7 @@ class pub Languages {
     ruby.register(langs)
     rust.register(langs)
     shell.register(langs)
+    toml.register(langs)
     langs
   }
 
