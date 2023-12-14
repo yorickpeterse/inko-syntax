@@ -21,10 +21,9 @@ fn delimited_token(
   buffer: mut Buffer,
   kind: TokenKind,
   close: Int,
+  start: Int,
   escape: Bool,
 ) -> Token {
-  let start = buffer.offset
-
   # Advance over the opening byte.
   buffer.offset += 1
   buffer.advance_while fn (b) {
@@ -67,11 +66,15 @@ fn line_comment(buffer: mut Buffer) -> Token {
 }
 
 fn single_string(buffer: mut Buffer) -> Token {
-  delimited_token(buffer, TokenKind.String, bytes.SQUOTE, escape: true)
+  delimited_token(
+    buffer, TokenKind.String, bytes.SQUOTE, start: buffer.offset, escape: true
+  )
 }
 
 fn double_string(buffer: mut Buffer) -> Token {
-  delimited_token(buffer, TokenKind.String, bytes.DQUOTE, escape: true)
+  delimited_token(
+    buffer, TokenKind.String, bytes.DQUOTE, start: buffer.offset, escape: true
+  )
 }
 
 fn text_or_keyword(
@@ -98,7 +101,10 @@ fn int_or_float(buffer: mut Buffer) -> Token {
   match buffer.get {
     case bytes.PERIOD -> {
       if bytes.digit?(buffer.peek(1)).false? {
-        return Token.new(TokenKind.Int, start, buffer.offset - 1 - start)
+        return Token.new(
+          TokenKind.Int,
+          value: buffer.slice(start, buffer.offset - 1 - start)
+        )
       }
 
       buffer.offset += 2

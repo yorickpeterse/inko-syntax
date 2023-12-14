@@ -68,7 +68,7 @@ fn pub tests(t: mut Tests) {
     buf.offset += 3
     t.equal(
       buf.token(TokenKind.Text, start: 0),
-      Token.new(TokenKind.Text, start: 0, size: 3)
+      Token.new(TokenKind.Text, 'abc')
     )
   }
 

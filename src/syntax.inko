@@ -66,7 +66,7 @@ impl Hash for TokenKind {
   }
 }
 
-impl Equal[TokenKind] for TokenKind {
+impl Equal[ref TokenKind] for TokenKind {
   fn pub ==(other: ref TokenKind) -> Bool {
     match (self, other) {
       case (Comment, Comment) -> true
@@ -104,32 +104,24 @@ class pub Token {
   # The kind/type of token.
   let pub @kind: TokenKind
 
-  # The byte offset the value of the token starts at.
-  let pub @start: Int
-
-  # The number of bytes the value of this token contains.
-  let pub @size: Int
+  # The value of the token.
+  let pub @value: String
 
   # Returns a new `Token`.
-  fn pub static new(kind: TokenKind, start: Int, size: Int) -> Token {
-    Token { @kind = kind, @start = start, @size = size }
+  fn pub static new(kind: TokenKind, value: String) -> Token {
+    Token { @kind = kind, @value = value }
   }
 }
 
-impl Equal[Token] for Token {
+impl Equal[ref Token] for Token {
   fn pub ==(other: ref Token) -> Bool {
-    @kind == other.kind and @start == other.start and @size == other.size
+    @kind == other.kind and @value == other.value
   }
 }
 
 impl Format for Token {
   fn pub fmt(formatter: mut Formatter) {
-    formatter
-      .object('Token')
-      .field('kind', @kind)
-      .field('start', @start)
-      .field('size', @size)
-      .finish
+    formatter.object('Token').field('kind', @kind).field('value', @value).finish
   }
 }
 
@@ -277,7 +269,7 @@ class pub Buffer {
   # Returns a new token starting at the given offset that ranges until the
   # current offset.
   fn pub token(kind: TokenKind, start: Int) -> Token {
-    Token.new(kind, start, size: @offset - start)
+    Token.new(kind, value: slice(start, @offset - start))
   }
 }
 

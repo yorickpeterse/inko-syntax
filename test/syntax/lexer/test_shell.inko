@@ -8,32 +8,32 @@ fn lex(input: String) -> Array[Token] {
 
 fn pub tests(t: mut Tests) {
   t.test('Strings') fn (t) {
-    t.equal(lex('""'), [Token.new(TokenKind.String, 0, 2)])
-    t.equal(lex('"foo"'), [Token.new(TokenKind.String, 0, 5)])
-    t.equal(lex('"a\\"b"'), [Token.new(TokenKind.String, 0, 6)])
-    t.equal(lex("''"), [Token.new(TokenKind.String, 0, 2)])
-    t.equal(lex("'foo'"), [Token.new(TokenKind.String, 0, 5)])
-    t.equal(lex("'a\\'b'"), [Token.new(TokenKind.String, 0, 6)])
-    t.equal(lex('"a'), [Token.new(TokenKind.String, 0, 2)])
-    t.equal(lex("'a"), [Token.new(TokenKind.String, 0, 2)])
+    t.equal(lex('""'), [Token.new(TokenKind.String, '""')])
+    t.equal(lex('"foo"'), [Token.new(TokenKind.String, '"foo"')])
+    t.equal(lex('"a\\"b"'), [Token.new(TokenKind.String, '"a\\"b"')])
+    t.equal(lex("''"), [Token.new(TokenKind.String, "''")])
+    t.equal(lex("'foo'"), [Token.new(TokenKind.String, "'foo'")])
+    t.equal(lex("'a\\'b'"), [Token.new(TokenKind.String, "'a\\'b'")])
+    t.equal(lex('"a'), [Token.new(TokenKind.String, '"a')])
+    t.equal(lex("'a"), [Token.new(TokenKind.String, "'a")])
   }
 
   t.test('Comments') fn (t) {
-    t.equal(lex('#'), [Token.new(TokenKind.Comment, 0, 1)])
-    t.equal(lex('# abc'), [Token.new(TokenKind.Comment, 0, 5)])
+    t.equal(lex('#'), [Token.new(TokenKind.Comment, '#')])
+    t.equal(lex('# abc'), [Token.new(TokenKind.Comment, '# abc')])
     t.equal(
       lex("# abc\n"),
-      [Token.new(TokenKind.Comment, 0, 5), Token.new(TokenKind.Text, 5, 1)]
+      [Token.new(TokenKind.Comment, '# abc'), Token.new(TokenKind.Text, "\n")]
     )
   }
 
   t.test('Numbers') fn (t) {
-    t.equal(lex('10'), [Token.new(TokenKind.Int, 0, 2)])
+    t.equal(lex('10'), [Token.new(TokenKind.Int, '10')])
     t.equal(
       lex('10.5'), [
-        Token.new(TokenKind.Int, 0, 2),
-        Token.new(TokenKind.Text, 2, 1),
-        Token.new(TokenKind.Int, 3, 1),
+        Token.new(TokenKind.Int, '10'),
+        Token.new(TokenKind.Text, '.'),
+        Token.new(TokenKind.Int, '5'),
       ]
     )
   }
@@ -43,34 +43,34 @@ fn pub tests(t: mut Tests) {
       '~', '!', '$', '%', '^', '&', '*', '(', ')', '_', '+', '`', '-', '=', '{',
       '}', '[', ']', '<', '>', ',', '.', '/', '?', '\\', '|',
     ].into_iter.each fn (sym) {
-      t.equal(lex(sym), [Token.new(TokenKind.Text, 0, 1)])
+      t.equal(lex(sym), [Token.new(TokenKind.Text, sym)])
     }
   }
 
   t.test('Identifiers and keywords') fn (t) {
-    t.equal(lex('foo'), [Token.new(TokenKind.Text, 0, 3)])
-    t.equal(lex('foo_bar'), [Token.new(TokenKind.Text, 0, 7)])
-    t.equal(lex('foo10'), [Token.new(TokenKind.Text, 0, 5)])
+    t.equal(lex('foo'), [Token.new(TokenKind.Text, 'foo')])
+    t.equal(lex('foo_bar'), [Token.new(TokenKind.Text, 'foo_bar')])
+    t.equal(lex('foo10'), [Token.new(TokenKind.Text, 'foo10')])
     t.equal(
       lex('foo-'),
-      [Token.new(TokenKind.Text, 0, 3), Token.new(TokenKind.Text, 3, 1)]
+      [Token.new(TokenKind.Text, 'foo'), Token.new(TokenKind.Text, '-')]
     )
 
     KEYWORDS.iter.each fn (kw) {
-      t.equal(lex(kw), [Token.new(TokenKind.Keyword, 0, kw.size)])
+      t.equal(lex(kw), [Token.new(TokenKind.Keyword, kw)])
     }
   }
 
   t.test('Whitespace') fn (t) {
-    t.equal(lex(' '), [Token.new(TokenKind.Text, 0, 1)])
-    t.equal(lex("\t"), [Token.new(TokenKind.Text, 0, 1)])
-    t.equal(lex("\n"), [Token.new(TokenKind.Text, 0, 1)])
-    t.equal(lex("\r"), [Token.new(TokenKind.Text, 0, 1)])
+    t.equal(lex(' '), [Token.new(TokenKind.Text, ' ')])
+    t.equal(lex("\t"), [Token.new(TokenKind.Text, "\t")])
+    t.equal(lex("\n"), [Token.new(TokenKind.Text, "\n")])
+    t.equal(lex("\r"), [Token.new(TokenKind.Text, "\r")])
   }
 
   t.test('Invalid syntax') fn (t) {
-    t.equal(lex('ééé'), [Token.new(TokenKind.Text, 0, 6)])
-    t.equal(lex("\0"), [Token.new(TokenKind.Text, 0, 1)])
-    t.equal(lex("\u{0001}"), [Token.new(TokenKind.Text, 0, 1)])
+    t.equal(lex('ééé'), [Token.new(TokenKind.Text, 'ééé')])
+    t.equal(lex("\0"), [Token.new(TokenKind.Text, "\0")])
+    t.equal(lex("\u{0001}"), [Token.new(TokenKind.Text, "\u{0001}")])
   }
 }

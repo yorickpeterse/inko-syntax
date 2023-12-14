@@ -47,8 +47,8 @@ class pub Lexer {
 
     if @buffer.get == bytes.EXCL {
       @buffer.offset += 1
+      token.value = token.value + '!'
       token.kind = TokenKind.Macro
-      token.size += 1
     }
 
     token

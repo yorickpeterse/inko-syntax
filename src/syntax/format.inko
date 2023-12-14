@@ -7,10 +7,7 @@ import syntax.(Lexer, Token, TokenKind)
 # A type for formatting a token stream into a `String`.
 trait pub Format {
   # Formats the token stream produced by a `Lexer` into a `String`.
-  #
-  # We list `Iter[Token]` as an explicit requirement here due to
-  # https://github.com/inko-lang/inko/issues/620.
-  fn pub format[I: mut + Lexer + Iter[Token]](lexer: I) -> String
+  fn pub format[I: mut + Lexer](lexer: move I) -> String
 }
 
 # A type that forms a lexer's token stream as HTML.
@@ -39,7 +36,7 @@ class pub Html {
 }
 
 impl Format for Html {
-  fn pub format[I: mut + Lexer + Iter[Token]](lexer: I) -> String {
+  fn pub format[I: mut + Lexer](lexer: move I) -> String {
     let doc = Document.new
     let div = doc.div
     let pre = div.pre
@@ -73,9 +70,10 @@ impl Format for Html {
         case Text -> ''
       }
 
-      let el = if cls.size > 0 { code.span.attr('class', cls) } else { code }
+      let el =
+        if cls.size > 0 { code.span.attr('class', cls) } else { mut code }
 
-      el.text(lexer.buffer.slice(tok.start, tok.size))
+      el.text(tok.value)
     }
 
     doc.fragment = true

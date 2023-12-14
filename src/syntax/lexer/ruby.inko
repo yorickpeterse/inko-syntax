@@ -82,12 +82,8 @@ class pub Lexer {
       case _ -> return @buffer.token(TokenKind.Text, start)
     }
 
-    let token =
-      helpers.delimited_token(@buffer, TokenKind.Symbol, quote, escape: true)
-
-    token.size += 1
-    token.start -= 1
-    token
+    helpers
+      .delimited_token(@buffer, TokenKind.Symbol, quote, start, escape: true)
   }
 
   fn mut percent_string -> Token {
@@ -103,12 +99,8 @@ class pub Lexer {
       case _ -> return @buffer.token(TokenKind.Text, start)
     }
 
-    let token =
-      helpers.delimited_token(@buffer, TokenKind.String, close, escape: true)
-
-    token.size += 1
-    token.start -= 1
-    token
+    helpers
+      .delimited_token(@buffer, TokenKind.String, close, start, escape: true)
   }
 }
 
