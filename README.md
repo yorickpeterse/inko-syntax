@@ -64,10 +64,10 @@ class async Main {
     let lexer = lang.lexer(bytes)
 
     # The `Html` formatter takes a lexer and turns it into Pygments compatible
-    # HTML.
+    # HTML document fragment.
     let html = Html.new.format(lexer)
 
-    STDOUT.new.print(html)
+    STDOUT.new.print(html.to_string)
   }
 }
 ```

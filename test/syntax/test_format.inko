@@ -22,7 +22,7 @@ fn pub tests(t: mut Tests) {
       let bytes = pair.0.to_byte_array
 
       t.equal(
-        Html.new.format(Lexer.new(bytes)),
+        Html.new.format(Lexer.new(bytes)).to_string,
         "\
           <div class=\"highlight\">\
             <pre class=\"highlight\"><code>{pair.1}</code></pre>\
@@ -39,7 +39,7 @@ fn pub tests(t: mut Tests) {
     html.class = Option.None
 
     t.equal(
-      html.format(Lexer.new(bytes)),
+      html.format(Lexer.new(bytes)).to_string,
       '<div><pre><code>a</code></pre></div>'
     )
   }
@@ -52,7 +52,7 @@ fn pub tests(t: mut Tests) {
     html.pre_class = Option.Some('foo')
 
     t.equal(
-      html.format(Lexer.new(bytes)),
+      html.format(Lexer.new(bytes)).to_string,
       '<div><pre class="foo"><code>a</code></pre></div>'
     )
   }
@@ -64,7 +64,7 @@ fn pub tests(t: mut Tests) {
     html.pre_class = Option.Some('foo')
 
     t.equal(
-      html.format(Lexer.new(bytes)),
+      html.format(Lexer.new(bytes)).to_string,
       '<div class="highlight"><pre class="highlight foo"><code>a</code></pre></div>'
     )
   }

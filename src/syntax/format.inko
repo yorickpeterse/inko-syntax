@@ -4,12 +4,6 @@ import std.iter.Iter
 import std.string.StringBuffer
 import syntax.(Lexer, Token, TokenKind)
 
-# A type for formatting a token stream into a `String`.
-trait pub Format {
-  # Formats the token stream produced by a `Lexer` into a `String`.
-  fn pub format[I: mut + Lexer](lexer: move I) -> String
-}
-
 # A type that forms a lexer's token stream as HTML.
 #
 # The generated HTML is compatible with [Pygments](https://pygments.org/)
@@ -33,10 +27,14 @@ class pub Html {
   fn pub static new -> Html {
     Html { @class = Option.Some('highlight'), @pre_class = Option.None }
   }
-}
 
-impl Format for Html {
-  fn pub format[I: mut + Lexer](lexer: move I) -> String {
+  # Formats the token stream as an HTML document fragment.
+  #
+  # The returned document fragment can be converted into a `String` by calling
+  # `to_string` on it. See the documentation of
+  # [inko-builder](https://github.com/yorickpeterse/inko-builder) for more
+  # details.
+  fn pub format[I: mut + Lexer](lexer: move I) -> Document {
     let doc = Document.fragment
     let div = doc.div
     let pre = div.pre
@@ -76,6 +74,6 @@ impl Format for Html {
       el.text(tok.value)
     }
 
-    doc.to_string
+    doc
   }
 }
