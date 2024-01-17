@@ -37,7 +37,7 @@ class pub Html {
 
 impl Format for Html {
   fn pub format[I: mut + Lexer](lexer: move I) -> String {
-    let doc = Document.new
+    let doc = Document.fragment
     let div = doc.div
     let pre = div.pre
     let code = pre.code
@@ -76,7 +76,6 @@ impl Format for Html {
       el.text(tok.value)
     }
 
-    doc.fragment = true
     doc.to_string
   }
 }
