@@ -333,7 +333,7 @@ class pub Languages {
   # Returns the language for the given name.
   #
   # If the name isn't recognized, a `None` is returned.
-  fn pub mut get(name: String) -> Option[mut Language] {
-    @map.opt_mut(name).else fn { @aliases.opt_mut(name) }
+  fn pub get(name: String) -> Option[ref Language] {
+    @map.opt(name).else fn { @aliases.opt(name) }
   }
 }
