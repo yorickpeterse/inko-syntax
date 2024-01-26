@@ -14,7 +14,7 @@ MIME type, or the file contents.
 ## Installation
 
 ```bash
-inko pkg add github.com/yorickpeterse/inko-syntax 0.6.0
+inko pkg add github.com/yorickpeterse/inko-syntax 0.7.0
 inko pkg sync
 ```
 
