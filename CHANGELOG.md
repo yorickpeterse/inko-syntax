@@ -8,6 +8,16 @@
 
 - [89f652b](https://github.com/yorickpeterse/inko-syntax/commit/89f652b61619423e53654ba56679c8cc040a0fc4): Revert "Make Languages.get immutable"
 
+## 0.6.0 (2024-01-26)
+
+### Added
+
+- [d61b314](https://github.com/yorickpeterse/inko-syntax/commit/d61b3144715b5a3f36160d1909a16eb695941261): Highlight hexadecimal ints for several languages
+
+### Fixed
+
+- [89f652b](https://github.com/yorickpeterse/inko-syntax/commit/89f652b61619423e53654ba56679c8cc040a0fc4): Revert "Make Languages.get immutable"
+
 ## 0.5.0 (2024-01-17)
 
 ### Changed
