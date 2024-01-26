@@ -46,7 +46,9 @@ impl Iter[Token] for Lexer {
       case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
       case bytes.SQUOTE -> Option.Some(helpers.single_string(@buffer))
       case bytes.HASH -> Option.Some(helpers.line_comment(@buffer))
-      case byte if bytes.digit?(byte) -> Option.Some(helpers.integer(@buffer))
+      case byte if bytes.digit?(byte) -> {
+        Option.Some(helpers.int_or_float(@buffer))
+      }
       case byte if bytes.letter?(byte) -> Option.Some(word)
       case byte if bytes.whitespace?(byte) -> {
         Option.Some(helpers.whitespace(@buffer))

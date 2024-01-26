@@ -29,13 +29,9 @@ fn pub tests(t: mut Tests) {
 
   t.test('Numbers') fn (t) {
     t.equal(lex('10'), [Token.new(TokenKind.Int, '10')])
-    t.equal(
-      lex('10.5'), [
-        Token.new(TokenKind.Int, '10'),
-        Token.new(TokenKind.Text, '.'),
-        Token.new(TokenKind.Int, '5'),
-      ]
-    )
+    t.equal(lex('0x123'), [Token.new(TokenKind.Int, '0x123')])
+    t.equal(lex('0X123'), [Token.new(TokenKind.Int, '0X123')])
+    t.equal(lex('10.5'), [Token.new(TokenKind.Float, '10.5')])
   }
 
   t.test('Symbols') fn (t) {

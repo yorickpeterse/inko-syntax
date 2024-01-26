@@ -95,8 +95,17 @@ fn text_or_keyword(
 
 fn int_or_float(buffer: mut Buffer) -> Token {
   let start = buffer.offset
+  let hex = match buffer.peek(1) {
+    case bytes.LOWER_X or bytes.UPPER_X -> {
+      buffer.offset += 2
+      true
+    }
+    case _ -> false
+  }
 
   digits_or_underscore(buffer)
+
+  if hex { return buffer.token(TokenKind.Int, start) }
 
   match buffer.get {
     case bytes.PERIOD -> {
