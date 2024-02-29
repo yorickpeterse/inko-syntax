@@ -63,6 +63,14 @@ fn pub tests(t: mut Tests) {
         Token.new(TokenKind.Text, '+'),
       ]
     )
+    t.equal(
+      lex('10.a'),
+      [
+        Token.new(TokenKind.Int, '10'),
+        Token.new(TokenKind.Text, '.'),
+        Token.new(TokenKind.Text, 'a'),
+      ]
+    )
   }
 
   t.test('Symbols') fn (t) {

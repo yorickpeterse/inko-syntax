@@ -110,10 +110,9 @@ fn int_or_float(buffer: mut Buffer) -> Token {
   match buffer.get {
     case bytes.PERIOD -> {
       if bytes.digit?(buffer.peek(1)).false? {
-        return Token.new(
-          TokenKind.Int,
-          value: buffer.slice(start, buffer.offset - 1 - start)
-        )
+        let value = buffer.slice(start, buffer.offset - start)
+
+        return Token.new(TokenKind.Int, value)
       }
 
       buffer.offset += 2
