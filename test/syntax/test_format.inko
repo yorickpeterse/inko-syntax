@@ -1,9 +1,9 @@
-import std.test.Tests
-import syntax.format.Html
-import syntax.lexer.inko.Lexer
+import std.test (Tests)
+import syntax.format (Html)
+import syntax.lexer.inko (Lexer)
 
 fn pub tests(t: mut Tests) {
-  t.test('Html.format') fn (t) {
+  t.test('Html.format', fn (t) {
     let tests = [
       ('# a', '<span class="c"># a</span>'),
       ('"a"', '<span class="s">"a"</span>'),
@@ -14,50 +14,46 @@ fn pub tests(t: mut Tests) {
       ('@a', '<span class="vi">@a</span>'),
       ('foo', 'foo'),
       ('áá', 'áá'),
-      ("\n", "\n"),
-      ("# a\n10", "<span class=\"c\"># a</span>\n<span class=\"mi\">10</span>")
+      ('\n', '\n'),
+      ('# a\n10', '<span class="c"># a</span>\n<span class="mi">10</span>'),
     ]
 
-    tests.into_iter.each fn (pair) {
+    tests.into_iter.each(fn (pair) {
       let bytes = pair.0.to_byte_array
 
       t.equal(
         Html.new.format(Lexer.new(bytes)).to_string,
-        "\
-          <div class=\"highlight\">\
-            <pre class=\"highlight\"><code>{pair.1}</code></pre>\
-          </div>\
-        "
+        '<div class="highlight"><pre class="highlight"><code>${pair.1}</code></pre></div>',
       )
-    }
-  }
+    })
+  })
 
-  t.test('Html.format without any classes') fn (t) {
+  t.test('Html.format without any classes', fn (t) {
     let bytes = 'a'.to_byte_array
     let html = Html.new
 
-    html.class = Option.None
+    html.base_class = Option.None
 
     t.equal(
       html.format(Lexer.new(bytes)).to_string,
-      '<div><pre><code>a</code></pre></div>'
+      '<div><pre><code>a</code></pre></div>',
     )
-  }
+  })
 
-  t.test('Html.format with just a pre class') fn (t) {
+  t.test('Html.format with just a pre class', fn (t) {
     let bytes = 'a'.to_byte_array
     let html = Html.new
 
-    html.class = Option.None
+    html.base_class = Option.None
     html.pre_class = Option.Some('foo')
 
     t.equal(
       html.format(Lexer.new(bytes)).to_string,
-      '<div><pre class="foo"><code>a</code></pre></div>'
+      '<div><pre class="foo"><code>a</code></pre></div>',
     )
-  }
+  })
 
-  t.test('Html.format with a base and pre class') fn (t) {
+  t.test('Html.format with a base and pre class', fn (t) {
     let bytes = 'a'.to_byte_array
     let html = Html.new
 
@@ -65,7 +61,7 @@ fn pub tests(t: mut Tests) {
 
     t.equal(
       html.format(Lexer.new(bytes)).to_string,
-      '<div class="highlight"><pre class="highlight foo"><code>a</code></pre></div>'
+      '<div class="highlight"><pre class="highlight foo"><code>a</code></pre></div>',
     )
-  }
+  })
 }

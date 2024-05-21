@@ -1,8 +1,8 @@
 # Formatting of token streams as HTML.
-import builder.html.Document
-import std.iter.Iter
-import std.string.StringBuffer
-import syntax.(Lexer, Token, TokenKind)
+import builder.html (Document)
+import std.iter (Iter)
+import std.string (StringBuffer)
+import syntax (Lexer, Token, TokenKind)
 
 # A type that forms a lexer's token stream as HTML.
 #
@@ -13,7 +13,7 @@ class pub Html {
   # elements.
   #
   # This field defaults to "highlight".
-  let pub @class: Option[String]
+  let pub @base_class: Option[String]
 
   # An extra class to apply to the `<pre>` element.
   #
@@ -25,7 +25,7 @@ class pub Html {
 
   # Returns a new HTML formatter.
   fn pub static new -> Html {
-    Html { @class = Option.Some('highlight'), @pre_class = Option.None }
+    Html(base_class: Option.Some('highlight'), pre_class: Option.None)
   }
 
   # Formats the token stream as an HTML document fragment.
@@ -40,10 +40,10 @@ class pub Html {
     let pre = div.pre
     let code = pre.code
 
-    match (@class, @pre_class) {
+    match (@base_class, @pre_class) {
       case (Some(a), Some(b)) -> {
         div.attr('class', a)
-        pre.attr('class', "{a} {b}")
+        pre.attr('class', '${a} ${b}')
         nil
       }
       case (Some(a), _) -> {
@@ -54,7 +54,7 @@ class pub Html {
       case _ -> {}
     }
 
-    lexer.each fn (tok) {
+    lexer.each(fn (tok) {
       # These classes are taken from
       # https://github.com/pygments/pygments/blob/8f3bec7982ba52915ee95f34f18e188243364600/pygments/token.py.
       let cls = match tok.kind {
@@ -68,11 +68,14 @@ class pub Html {
         case Text -> ''
       }
 
-      let el =
-        if cls.size > 0 { code.span.attr('class', cls) } else { mut code }
+      let el = if cls.size > 0 {
+        code.span.attr('class', cls)
+      } else {
+        mut code
+      }
 
       el.text(tok.value)
-    }
+    })
 
     doc
   }

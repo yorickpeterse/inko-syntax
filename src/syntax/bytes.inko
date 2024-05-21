@@ -52,8 +52,7 @@ fn multibyte?(byte: Int) -> Bool {
 }
 
 fn letter?(byte: Int) -> Bool {
-  (byte >= LOWER_A and byte <= LOWER_Z)
-    or (byte >= UPPER_A and byte <= UPPER_Z)
+  (byte >= LOWER_A and byte <= LOWER_Z) or (byte >= UPPER_A and byte <= UPPER_Z)
 }
 
 fn letter_or_digit?(byte: Int) -> Bool {

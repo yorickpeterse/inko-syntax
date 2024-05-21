@@ -1,14 +1,14 @@
-import std.iter.Iter
-import std.test.Tests
-import syntax.(
-  Buffer, Keywords, Lexer, Language, Languages, Token, TokenKind, EOF
+import std.iter (Iter)
+import std.test (Tests)
+import syntax (
+  Buffer, EOF, Keywords, Language, Languages, Lexer, Token, TokenKind,
 )
 
 class DummyLexer {
   let @buffer: Buffer
 
   fn static new(bytes: ref ByteArray) -> DummyLexer {
-    DummyLexer { @buffer = Buffer.new(bytes) }
+    DummyLexer(Buffer.new(bytes))
   }
 }
 
@@ -25,14 +25,14 @@ impl Lexer for DummyLexer {
 }
 
 fn pub tests(t: mut Tests) {
-  t.test('Buffer.size') fn (t) {
+  t.test('Buffer.size', fn (t) {
     let bytes = 'abc'.to_byte_array
     let buf = Buffer.new(bytes)
 
     t.equal(buf.size, 3)
-  }
+  })
 
-  t.test('Buffer.get') fn (t) {
+  t.test('Buffer.get', fn (t) {
     let bytes = 'abc'.to_byte_array
     let buf = Buffer.new(bytes)
 
@@ -40,9 +40,9 @@ fn pub tests(t: mut Tests) {
 
     buf.offset += 1
     t.equal(buf.get, 98)
-  }
+  })
 
-  t.test('Buffer.peek') fn (t) {
+  t.test('Buffer.peek', fn (t) {
     let bytes = 'abc'.to_byte_array
     let buf = Buffer.new(bytes)
 
@@ -51,28 +51,28 @@ fn pub tests(t: mut Tests) {
     t.equal(buf.peek(1), 98)
     t.equal(buf.get, 97)
     t.equal(buf.peek(200), EOF)
-  }
+  })
 
-  t.test('Buffer.slice') fn (t) {
+  t.test('Buffer.slice', fn (t) {
     let bytes = 'abc'.to_byte_array
     let buf = Buffer.new(bytes)
 
     t.equal(buf.slice(start: 0, size: 3), 'abc')
     t.equal(buf.slice(start: 0, size: 10), 'abc')
-  }
+  })
 
-  t.test('Buffer.token') fn (t) {
+  t.test('Buffer.token', fn (t) {
     let bytes = 'abc'.to_byte_array
     let buf = Buffer.new(bytes)
 
     buf.offset += 3
     t.equal(
       buf.token(TokenKind.Text, start: 0),
-      Token.new(TokenKind.Text, 'abc')
+      Token.new(TokenKind.Text, 'abc'),
     )
-  }
+  })
 
-  t.test('Languages.new') fn (t) {
+  t.test('Languages.new', fn (t) {
     let langs = Languages.new
 
     t.true(langs.get('fish').some?)
@@ -82,45 +82,52 @@ fn pub tests(t: mut Tests) {
     t.true(langs.get('rust').some?)
     t.true(langs.get('shell').some?)
     t.true(langs.get('toml').some?)
-  }
+  })
 
-  t.test('Languages.add') fn (t) {
+  t.test('Languages.add', fn (t) {
     let langs = Languages.empty
 
-    langs.add(Language {
-      @name = 'foo',
-      @aliases = ['bar'],
-      @builder = fn (in) { DummyLexer.new(in) as Lexer }
-    })
+    langs.add(
+      Language(
+        name: 'foo',
+        aliases: ['bar'],
+        builder: fn (in) { DummyLexer.new(in) as Lexer },
+      ),
+    )
 
-    langs.add(Language {
-      @name = 'ruby',
-      @aliases = [],
-      @builder = fn (in) { DummyLexer.new(in) as Lexer }
-    })
+    langs.add(
+      Language(
+        name: 'ruby',
+        aliases: [],
+        builder: fn (in) { DummyLexer.new(in) as Lexer },
+      ),
+    )
 
     t.true(langs.map.contains?('foo'))
     t.true(langs.map.contains?('ruby'))
     t.true(langs.aliases.contains?('bar'))
     t.false(langs.aliases.contains?('ruby'))
-  }
+  })
 
-  t.test('Languages.get') fn (t) {
+  t.test('Languages.get', fn (t) {
     let langs = Languages.empty
 
-    langs.add(Language {
-      @name = 'foo',
-      @aliases = ['bar'],
-      @builder = fn (in) { DummyLexer.new(in) as Lexer }
-    })
+    langs.add(
+      Language(
+        name: 'foo',
+        aliases: ['bar'],
+        builder: fn (in) { DummyLexer.new(in) as Lexer },
+      ),
+    )
 
     t.true(langs.get('foo').some?)
     t.true(langs.get('bar').some?)
-  }
+  })
 
-  t.test('Keywords.contains_range?') fn (t) {
-    let kw = Keywords
-      .new(['foo', 'foobar', 'foofoo', 'fn', 'BLA', 'module', 'module_foo'])
+  t.test('Keywords.contains_range?', fn (t) {
+    let kw = Keywords.new(
+      ['foo', 'foobar', 'foofoo', 'fn', 'BLA', 'module', 'module_foo'],
+    )
 
     t.true(kw.contains_range?('foo'.to_byte_array, 0, 3))
     t.true(kw.contains_range?('foobar'.to_byte_array, 0, 6))
@@ -138,12 +145,12 @@ fn pub tests(t: mut Tests) {
     t.false(kw.contains_range?(ByteArray.new, 0, 0))
     t.false(kw.contains_range?(ByteArray.from_array([0]), 0, 1))
     t.false(kw.contains_range?(ByteArray.from_array([255]), 0, 1))
-  }
+  })
 
-  t.test('Keywords.contains_range? with a keyword preceded by text') fn (t) {
+  t.test('Keywords.contains_range? with a keyword preceded by text', fn (t) {
     let kw = Keywords.new(['foo'])
     let buf = 'abc foo'.to_byte_array
 
     t.true(kw.contains_range?(buf, at: 4, size: 3))
-  }
+  })
 }

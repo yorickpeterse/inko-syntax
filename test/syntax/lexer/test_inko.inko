@@ -1,13 +1,13 @@
-import std.test.Tests
-import syntax.(Token, TokenKind)
-import syntax.lexer.inko.(KEYWORDS, Lexer)
+import std.test (Tests)
+import syntax (Token, TokenKind)
+import syntax.lexer.inko (KEYWORDS, Lexer)
 
 fn lex(input: String) -> Array[Token] {
   Lexer.new(input.to_byte_array).to_array
 }
 
 fn pub tests(t: mut Tests) {
-  t.test('Strings') fn (t) {
+  t.test('Strings', fn (t) {
     t.equal(lex('""'), [Token.new(TokenKind.String, '""')])
     t.equal(lex('"foo"'), [Token.new(TokenKind.String, '"foo"')])
     t.equal(lex('"a\\"b"'), [Token.new(TokenKind.String, '"a\\"b"')])
@@ -17,27 +17,27 @@ fn pub tests(t: mut Tests) {
     t.equal(lex('"a'), [Token.new(TokenKind.String, '"a')])
     t.equal(lex("'a"), [Token.new(TokenKind.String, "'a")])
     t.equal(lex('"\\"\\""'), [Token.new(TokenKind.String, '"\\"\\""')])
-  }
+  })
 
-  t.test('Comments') fn (t) {
+  t.test('Comments', fn (t) {
     t.equal(lex('#'), [Token.new(TokenKind.Comment, '#')])
     t.equal(lex('# abc'), [Token.new(TokenKind.Comment, '# abc')])
     t.equal(
-      lex("# abc\n"),
-      [Token.new(TokenKind.Comment, '# abc'), Token.new(TokenKind.Text, "\n")]
+      lex('# abc\n'),
+      [Token.new(TokenKind.Comment, '# abc'), Token.new(TokenKind.Text, '\n')],
     )
 
     t.equal(
-      lex("# a\nclass"),
+      lex('# a\nclass'),
       [
         Token.new(TokenKind.Comment, '# a'),
-        Token.new(TokenKind.Text, "\n"),
+        Token.new(TokenKind.Text, '\n'),
         Token.new(TokenKind.Keyword, 'class'),
-      ]
+      ],
     )
-  }
+  })
 
-  t.test('Numbers') fn (t) {
+  t.test('Numbers', fn (t) {
     t.equal(lex('10'), [Token.new(TokenKind.Int, '10')])
     t.equal(lex('1_2'), [Token.new(TokenKind.Int, '1_2')])
     t.equal(lex('10.2'), [Token.new(TokenKind.Float, '10.2')])
@@ -55,7 +55,7 @@ fn pub tests(t: mut Tests) {
         Token.new(TokenKind.Int, '10'),
         Token.new(TokenKind.Text, 'e'),
         Token.new(TokenKind.Text, '+'),
-      ]
+      ],
     )
     t.equal(
       lex('10.a'),
@@ -63,53 +63,77 @@ fn pub tests(t: mut Tests) {
         Token.new(TokenKind.Int, '10'),
         Token.new(TokenKind.Text, '.'),
         Token.new(TokenKind.Text, 'a'),
-      ]
+      ],
     )
-  }
+  })
 
-  t.test('Symbols') fn (t) {
+  t.test('Symbols', fn (t) {
     [
-      '~', '!', '$', '%', '^', '&', '*', '(', ')', '_', '+', '`', '-', '=', '{',
-      '}', '[', ']', '<', '>', ',', '.', '/', '?', '\\', '|',
-    ].into_iter.each fn (sym) {
-      t.equal(lex(sym), [Token.new(TokenKind.Text, sym)])
-    }
-  }
+      '~',
+      '!',
+      '$',
+      '%',
+      '^',
+      '&',
+      '*',
+      '(',
+      ')',
+      '_',
+      '+',
+      '`',
+      '-',
+      '=',
+      '{',
+      '}',
+      '[',
+      ']',
+      '<',
+      '>',
+      ',',
+      '.',
+      '/',
+      '?',
+      '\\',
+      '|',
+    ]
+      .into_iter
+      .each(fn (sym) { t.equal(lex(sym), [Token.new(TokenKind.Text, sym)]) })
+  })
 
-  t.test('Identifiers and keywords') fn (t) {
+  t.test('Identifiers and keywords', fn (t) {
     t.equal(lex('foo'), [Token.new(TokenKind.Text, 'foo')])
     t.equal(lex('foo?'), [Token.new(TokenKind.Text, 'foo?')])
     t.equal(lex('foo_bar'), [Token.new(TokenKind.Text, 'foo_bar')])
     t.equal(lex('foo10'), [Token.new(TokenKind.Text, 'foo10')])
     t.equal(
       lex('foo-'),
-      [Token.new(TokenKind.Text, 'foo'), Token.new(TokenKind.Text, '-')]
+      [Token.new(TokenKind.Text, 'foo'), Token.new(TokenKind.Text, '-')],
     )
 
-    KEYWORDS.iter.each fn (kw) {
+    KEYWORDS.iter.each(fn (kw) {
       t.equal(lex(kw), [Token.new(TokenKind.Keyword, kw)])
-    }
-  }
+    })
+  })
 
-  t.test('Whitespace') fn (t) {
+  t.test('Whitespace', fn (t) {
     t.equal(lex(' '), [Token.new(TokenKind.Text, ' ')])
-    t.equal(lex("\t"), [Token.new(TokenKind.Text, "\t")])
-    t.equal(lex("\n"), [Token.new(TokenKind.Text, "\n")])
-    t.equal(lex("\r"), [Token.new(TokenKind.Text, "\r")])
-  }
+    t.equal(lex('\t'), [Token.new(TokenKind.Text, '\t')])
+    t.equal(lex('\n'), [Token.new(TokenKind.Text, '\n')])
+    t.equal(lex('\r'), [Token.new(TokenKind.Text, '\r')])
+  })
 
-  t.test('Invalid syntax') fn (t) {
+  t.test('Invalid syntax', fn (t) {
     t.equal(lex('ééé'), [Token.new(TokenKind.Text, 'ééé')])
-    t.equal(lex("\0"), [Token.new(TokenKind.Text, "\0")])
-    t.equal(lex("\u{0001}"), [Token.new(TokenKind.Text, "\u{0001}")])
-  }
+    t.equal(lex('\0'), [Token.new(TokenKind.Text, '\0')])
+    t.equal(lex('\u{1}'), [Token.new(TokenKind.Text, '\u{1}')])
+  })
 
-  t.test('Constants') fn (t) {
+  t.test('Constants', fn (t) {
     t.equal(lex('Foo'), [Token.new(TokenKind.Text, 'Foo')])
     t.equal(lex('Foo_Bar'), [Token.new(TokenKind.Text, 'Foo_Bar')])
-  }
+  })
 
-  t.test('Fields') fn (t) {
+  t.test('Fields', fn (t) {
     t.equal(lex('@a'), [Token.new(TokenKind.Field, '@a')])
     t.equal(lex('@a10'), [Token.new(TokenKind.Field, '@a10')])
     t.equal(lex('@10'), [Token.new(TokenKind.Field, '@10')])
@@ -117,7 +141,7 @@ fn pub tests(t: mut Tests) {
     t.equal(lex('@'), [Token.new(TokenKind.Text, '@')])
     t.equal(
       lex('@+'),
-      [Token.new(TokenKind.Text, '@'), Token.new(TokenKind.Text, '+')]
+      [Token.new(TokenKind.Text, '@'), Token.new(TokenKind.Text, '+')],
     )
-  }
+  })
 }

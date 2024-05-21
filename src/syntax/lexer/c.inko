@@ -1,27 +1,57 @@
 # Lexical analysis of C syntax.
-import std.iter.Iter
-import syntax.(
-  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
-  TokenKind
+import std.iter (Iter)
+import syntax (
+  Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
+  TokenKind,
 )
 import syntax.bytes
 import syntax.helpers
 
 let KEYWORDS = [
-  '_Alignas', '_Alignof', '_Atomic', '_Generic', '_Imaginary', '_Noreturn',
-  '_Static_assert', '_Thread_local', 'auto', 'break', 'case', 'const',
-  'continue', 'default', 'do', 'else', 'enum', 'extern', 'for', 'goto', 'if',
-  'register', 'restricted', 'return', 'sizeof', 'static', 'struct', 'switch',
-  'typedef', 'union', 'virtual', 'volatile', 'while',
+  '_Alignas',
+  '_Alignof',
+  '_Atomic',
+  '_Generic',
+  '_Imaginary',
+  '_Noreturn',
+  '_Static_assert',
+  '_Thread_local',
+  'auto',
+  'break',
+  'case',
+  'const',
+  'continue',
+  'default',
+  'do',
+  'else',
+  'enum',
+  'extern',
+  'for',
+  'goto',
+  'if',
+  'register',
+  'restricted',
+  'return',
+  'sizeof',
+  'static',
+  'struct',
+  'switch',
+  'typedef',
+  'union',
+  'virtual',
+  'volatile',
+  'while',
 ]
 
 # Registers the lexer with the lexers registry.
 fn pub register(languages: mut Languages) {
-  languages.add(Language {
-    @name = 'c',
-    @aliases = ['cpp'],
-    @builder = fn (in) { Lexer.new(in) as LexerTrait }
-  })
+  languages.add(
+    Language(
+      name: 'c',
+      aliases: ['cpp'],
+      builder: fn (in) { Lexer.new(in) as LexerTrait },
+    ),
+  )
 }
 
 fn word_byte?(byte: Int) -> Bool {
@@ -35,14 +65,11 @@ class pub Lexer {
 
   # Returns a new `Lexer` that lexes the given input.
   fn pub static new(bytes: ref ByteArray) -> Lexer {
-    Lexer {
-      @buffer = Buffer.new(bytes),
-      @keywords = Keywords.new(KEYWORDS),
-    }
+    Lexer(buffer: Buffer.new(bytes), keywords: Keywords.new(KEYWORDS))
   }
 
   fn mut word -> Token {
-    helpers.text_or_keyword(@buffer, @keywords) fn (b) { word_byte?(b) }
+    helpers.text_or_keyword(@buffer, @keywords, fn (b) { word_byte?(b) })
   }
 
   fn mut ampersand -> Token {
@@ -55,8 +82,8 @@ class pub Lexer {
   fn mut macro -> Token {
     let start = @buffer.offset
 
-    @buffer.advance_while fn (b) { b == bytes.HASH }
-    @buffer.advance_while fn (b) { word_byte?(b) }
+    @buffer.advance_while(fn (b) { b == bytes.HASH })
+    @buffer.advance_while(fn (b) { word_byte?(b) })
     @buffer.token(TokenKind.Macro, start)
   }
 }

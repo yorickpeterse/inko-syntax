@@ -1,8 +1,8 @@
 # Lexical analysis of TOML syntax.
-import std.iter.Iter
-import syntax.(
-  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
-  TokenKind
+import std.iter (Iter)
+import syntax (
+  Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
+  TokenKind,
 )
 import syntax.bytes
 import syntax.helpers
@@ -11,11 +11,13 @@ let KEYWORDS = ['false', 'true']
 
 # Registers the lexer with the lexers registry.
 fn pub register(languages: mut Languages) {
-  languages.add(Language {
-    @name = 'toml',
-    @aliases = [],
-    @builder = fn (in) { Lexer.new(in) as LexerTrait }
-  })
+  languages.add(
+    Language(
+      name: 'toml',
+      aliases: [],
+      builder: fn (in) { Lexer.new(in) as LexerTrait },
+    ),
+  )
 }
 
 # A lexer for TOML.
@@ -25,18 +27,15 @@ class pub Lexer {
 
   # Returns a new `Lexer` that lexes the given input.
   fn pub static new(bytes: ref ByteArray) -> Lexer {
-    Lexer {
-      @buffer = Buffer.new(bytes),
-      @keywords = Keywords.new(KEYWORDS),
-    }
+    Lexer(buffer: Buffer.new(bytes), keywords: Keywords.new(KEYWORDS))
   }
 
   fn mut word -> Token {
-    helpers.text_or_keyword(@buffer, @keywords) fn (b) {
+    helpers.text_or_keyword(@buffer, @keywords, fn (b) {
       bytes.letter_or_digit?(b)
         or b == bytes.UNDER
         or (b == bytes.HYPHEN and bytes.letter_or_digit?(@buffer.peek(1)))
-    }
+    })
   }
 }
 

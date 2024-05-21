@@ -1,35 +1,85 @@
 # Lexical analysis of Make/Makefile syntax.
-import std.iter.Iter
-import syntax.(
-  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
-  TokenKind
+import std.iter (Iter)
+import syntax (
+  Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
+  TokenKind,
 )
 import syntax.bytes
 import syntax.helpers
 
 let KEYWORDS = [
-  'abspath', 'addprefix', 'addsuffix', 'and', 'basename', 'call', 'dir', 'else',
-  'endif', 'error', 'eval', 'export', 'file', 'filter', 'filter-out',
-  'findstring', 'firstword', 'flavor', 'foreach', 'if', 'ifdef', 'ifeq',
-  'ifndef', 'ifneq', 'join', 'lastword', 'notdir', 'or', 'origin', 'patsubst',
-  'realpath', 'shell', 'sort', 'strip', 'subst', 'suffix', 'unexport', 'value',
-  'warning', 'wildcard', 'word', 'wordlist', 'words',
+  'abspath',
+  'addprefix',
+  'addsuffix',
+  'and',
+  'basename',
+  'call',
+  'dir',
+  'else',
+  'endif',
+  'error',
+  'eval',
+  'export',
+  'file',
+  'filter',
+  'filter-out',
+  'findstring',
+  'firstword',
+  'flavor',
+  'foreach',
+  'if',
+  'ifdef',
+  'ifeq',
+  'ifndef',
+  'ifneq',
+  'join',
+  'lastword',
+  'notdir',
+  'or',
+  'origin',
+  'patsubst',
+  'realpath',
+  'shell',
+  'sort',
+  'strip',
+  'subst',
+  'suffix',
+  'unexport',
+  'value',
+  'warning',
+  'wildcard',
+  'word',
+  'wordlist',
+  'words',
 ]
-
 let TARGETS = [
-  '.DEFAULT', '.DELETE_ON_ERROR', '.EXPORT_ALL_VARIABLES', '.IGNORE',
-  '.INTERMEDIATE', '.LOW_RESOLUTION_TIME', '.NOTINTERMEDIATE', '.NOTPARALLEL',
-  '.ONESHELL', '.PHONY', '.POSIX', '.PRECIOUS', '.SECONDARY',
-  '.SECONDEXPANSION', '.SILENT', '.SUFFIXES',
+  '.DEFAULT',
+  '.DELETE_ON_ERROR',
+  '.EXPORT_ALL_VARIABLES',
+  '.IGNORE',
+  '.INTERMEDIATE',
+  '.LOW_RESOLUTION_TIME',
+  '.NOTINTERMEDIATE',
+  '.NOTPARALLEL',
+  '.ONESHELL',
+  '.PHONY',
+  '.POSIX',
+  '.PRECIOUS',
+  '.SECONDARY',
+  '.SECONDEXPANSION',
+  '.SILENT',
+  '.SUFFIXES',
 ]
 
 # Registers the lexer with the lexers registry.
 fn pub register(languages: mut Languages) {
-  languages.add(Language {
-    @name = 'make',
-    @aliases = [],
-    @builder = fn (in) { Lexer.new(in) as LexerTrait }
-  })
+  languages.add(
+    Language(
+      name: 'make',
+      aliases: [],
+      builder: fn (in) { Lexer.new(in) as LexerTrait },
+    ),
+  )
 }
 
 # A lexer for Make/Makefile syntax.
@@ -40,25 +90,25 @@ class pub Lexer {
 
   # Returns a new `Lexer` that lexes the given input.
   fn pub static new(bytes: ref ByteArray) -> Lexer {
-    Lexer {
-      @buffer = Buffer.new(bytes),
-      @keywords = Keywords.new(KEYWORDS),
-      @targets = Keywords.new(TARGETS),
-    }
+    Lexer(
+      buffer: Buffer.new(bytes),
+      keywords: Keywords.new(KEYWORDS),
+      targets: Keywords.new(TARGETS),
+    )
   }
 
   fn mut word -> Token {
-    helpers.text_or_keyword(@buffer, @keywords) fn (b) {
+    helpers.text_or_keyword(@buffer, @keywords, fn (b) {
       bytes.letter_or_digit?(b)
         or b == bytes.UNDER
         or (b == bytes.HYPHEN and bytes.letter_or_digit?(@buffer.peek(1)))
-    }
+    })
   }
 
   fn mut target -> Token {
-    helpers.text_or_keyword(@buffer, @targets) fn (b) {
+    helpers.text_or_keyword(@buffer, @targets, fn (b) {
       bytes.letter?(b) or b == bytes.UNDER or b == bytes.PERIOD
-    }
+    })
   }
 }
 

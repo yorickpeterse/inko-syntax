@@ -1,27 +1,63 @@
 # Lexical analysis of Rust syntax.
-import std.iter.Iter
-import syntax.(
-  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
-  TokenKind
+import std.iter (Iter)
+import syntax (
+  Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
+  TokenKind,
 )
 import syntax.bytes
 import syntax.helpers
 
 let KEYWORDS = [
-  'as', 'async', 'await', 'break', 'const', 'continue', 'crate', 'dyn', 'else',
-  'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in', 'let', 'loop',
-  'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'Self', 'self',
-  'static', 'struct', 'super', 'trait', 'true', 'type', 'union', 'unsafe',
-  'use', 'where', 'while',
+  'as',
+  'async',
+  'await',
+  'break',
+  'const',
+  'continue',
+  'crate',
+  'dyn',
+  'else',
+  'enum',
+  'extern',
+  'false',
+  'fn',
+  'for',
+  'if',
+  'impl',
+  'in',
+  'let',
+  'loop',
+  'match',
+  'mod',
+  'move',
+  'mut',
+  'pub',
+  'ref',
+  'return',
+  'Self',
+  'self',
+  'static',
+  'struct',
+  'super',
+  'trait',
+  'true',
+  'type',
+  'union',
+  'unsafe',
+  'use',
+  'where',
+  'while',
 ]
 
 # Registers the lexer with the lexers registry.
 fn pub register(languages: mut Languages) {
-  languages.add(Language {
-    @name = 'rust',
-    @aliases = [],
-    @builder = fn (in) { Lexer.new(in) as LexerTrait }
-  })
+  languages.add(
+    Language(
+      name: 'rust',
+      aliases: [],
+      builder: fn (in) { Lexer.new(in) as LexerTrait },
+    ),
+  )
 }
 
 fn word_byte?(byte: Int) -> Bool {
@@ -35,15 +71,13 @@ class pub Lexer {
 
   # Returns a new `Lexer` that lexes the given input.
   fn pub static new(bytes: ref ByteArray) -> Lexer {
-    Lexer {
-      @buffer = Buffer.new(bytes),
-      @keywords = Keywords.new(KEYWORDS),
-    }
+    Lexer(buffer: Buffer.new(bytes), keywords: Keywords.new(KEYWORDS))
   }
 
   fn mut word -> Token {
-    let token =
-      helpers.text_or_keyword(@buffer, @keywords) fn (b) { word_byte?(b) }
+    let token = helpers.text_or_keyword(@buffer, @keywords, fn (b) {
+      word_byte?(b)
+    })
 
     if @buffer.get == bytes.EXCL {
       @buffer.offset += 1
@@ -65,7 +99,7 @@ class pub Lexer {
     let start = @buffer.offset
 
     @buffer.offset += 1
-    @buffer.advance_while fn (b) { word_byte?(b) }
+    @buffer.advance_while(fn (b) { word_byte?(b) })
 
     if @buffer.get == bytes.SQUOTE {
       @buffer.offset += 1

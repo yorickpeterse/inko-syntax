@@ -9,7 +9,7 @@ MIME type, or the file contents.
 
 ## Requirements
 
-- Inko 0.13.2 or newer
+- Inko 0.15.0 or newer
 
 ## Installation
 
@@ -42,9 +42,9 @@ inko pkg sync
 A basic example:
 
 ```inko
-import std.stdio.STDOUT
-import syntax.Languages
-import syntax.format.Html
+import std.stdio (STDOUT)
+import syntax (Languages)
+import syntax.format (Html)
 
 class async Main {
   fn async main {

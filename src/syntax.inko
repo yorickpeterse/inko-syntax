@@ -1,10 +1,10 @@
 # A simple syntax highlighting library for Inko.
-import std.cmp.Equal
-import std.fmt.(Format as Format, Formatter)
-import std.hash.(Hash, Hasher)
-import std.iter.Iter
-import std.set.Set
-import syntax.bytes.(BSLASH, LF, whitespace?)
+import std.cmp (Equal)
+import std.fmt (Format as Format, Formatter)
+import std.hash (Hash, Hasher)
+import std.iter (Iter)
+import std.set (Set)
+import syntax.bytes (BSLASH, LF, whitespace?)
 import syntax.format
 import syntax.lexer.c
 import syntax.lexer.fish
@@ -109,7 +109,7 @@ class pub Token {
 
   # Returns a new `Token`.
   fn pub static new(kind: TokenKind, value: String) -> Token {
-    Token { @kind = kind, @value = value }
+    Token(kind: kind, value: value)
   }
 }
 
@@ -144,7 +144,7 @@ class pub Keywords {
   #
   # # Examples
   #
-  #     import syntax.Keywords
+  #     import syntax (Keywords)
   #
   #     Keywords.new(['fn', 'class', 'async'])
   fn pub static new(keywords: ref Array[String]) -> Keywords {
@@ -152,15 +152,15 @@ class pub Keywords {
     let first = ByteArray.filled(with: 0, times: 255)
     let second = ByteArray.filled(with: 0, times: 255)
 
-    keywords.iter.select fn (w) { w.size >= 2 }.each fn (word) {
+    keywords.iter.select(fn (w) { w.size >= 2 }).each(fn (word) {
       let bytes = word.to_byte_array
 
       first.set(bytes.get(0), 1)
       second.set(bytes.get(1), 1)
       words.insert(bytes)
-    }
+    })
 
-    Keywords { @words = words, @first = first, @second = second }
+    Keywords(words: words, first: first, second: second)
   }
 
   # Returns true if the range of bytes in `bytes` is a valid keyword.
@@ -182,7 +182,7 @@ class pub Keywords {
   #
   # # Examples
   #
-  #     import syntax.Keywords
+  #     import syntax (Keywords)
   #
   #     let kw = Keywords.new(['class', 'async', 'fn'])
   #     let input = 'class'.to_byte_array
@@ -232,7 +232,7 @@ class pub Buffer {
 
   # Returns a new `Buffer` that wraps the given `ByteArray`.
   fn pub static new(bytes: ref ByteArray) -> Buffer {
-    Buffer { @bytes = bytes, @offset = 0 }
+    Buffer(bytes: bytes, offset: 0)
   }
 
   # Returns the total number of bytes in the buffer.
@@ -283,7 +283,7 @@ class pub Buffer {
 #
 # Getting a language using a name, and creating its lexer:
 #
-#     import syntax.Languages
+#     import syntax (Languages)
 #
 #     let langs = Languages.new
 #
@@ -291,14 +291,14 @@ class pub Buffer {
 #
 # Getting a language using a file name:
 #
-#     import syntax.Languages
+#     import syntax (Languages)
 #
 #     let langs = Languages.new
 #
 #     langs.for_filename('*.inko').unwrap.create('# test'.to_byte_array)
 class pub Languages {
-  let @aliases: Map[String, mut Language]
   let @map: Map[String, Language]
+  let @aliases: Map[String, mut Language]
 
   # Returns a new registry, containing all default lexers.
   fn pub static new -> Languages {
@@ -321,12 +321,12 @@ class pub Languages {
   # meant for cases where you only want a subset of the available languages, and
   # are OK with registering them yourself.
   fn pub static empty -> Languages {
-    Languages { @aliases = Map.new, @map = Map.new, }
+    Languages(aliases: Map.new, map: Map.new)
   }
 
   # Registers a new language.
   fn pub mut add(language: Language) {
-    language.aliases.iter.each fn (name) { @aliases.set(name, language) }
+    language.aliases.iter.each(fn (name) { @aliases.set(name, language) })
     @map.set(language.name, language)
   }
 
@@ -334,6 +334,6 @@ class pub Languages {
   #
   # If the name isn't recognized, a `None` is returned.
   fn pub mut get(name: String) -> Option[mut Language] {
-    @map.opt_mut(name).else fn { @aliases.opt_mut(name) }
+    @map.opt_mut(name).else(fn { @aliases.opt_mut(name) })
   }
 }

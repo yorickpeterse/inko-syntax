@@ -1,34 +1,83 @@
 # Lexical analysis of Ruby syntax.
-import std.iter.Iter
-import syntax.(
-  EOF, Buffer, Keywords, Language, Lexer as LexerTrait, Languages, Token,
-  TokenKind
+import std.iter (Iter)
+import syntax (
+  Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
+  TokenKind,
 )
 import syntax.bytes
 import syntax.helpers
 
 let KEYWORDS = [
- 'BEGIN', 'END', 'alias', 'alias_method', 'attr', 'attr', 'attr_accessor',
- 'attr_reader', 'attr_writer', 'begin', 'break', 'case', 'catch', 'class',
- 'def', 'defined?', 'do', 'else', 'elsif', 'end', 'ensure', 'extend', 'false',
- 'for', 'if', 'in', 'include', 'loop', 'module', 'module_function', 'next',
- 'nil', 'private', 'protected', 'public', 'raise', 'raise', 'redo', 'rescue',
- 'retry', 'return', 'self', 'super', 'then', 'throw', 'true', 'undef', 'unless',
- 'until', 'when', 'while', 'yield',
+  'BEGIN',
+  'END',
+  'alias',
+  'alias_method',
+  'attr',
+  'attr',
+  'attr_accessor',
+  'attr_reader',
+  'attr_writer',
+  'begin',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'def',
+  'defined?',
+  'do',
+  'else',
+  'elsif',
+  'end',
+  'ensure',
+  'extend',
+  'false',
+  'for',
+  'if',
+  'in',
+  'include',
+  'loop',
+  'module',
+  'module_function',
+  'next',
+  'nil',
+  'private',
+  'protected',
+  'public',
+  'raise',
+  'raise',
+  'redo',
+  'rescue',
+  'retry',
+  'return',
+  'self',
+  'super',
+  'then',
+  'throw',
+  'true',
+  'undef',
+  'unless',
+  'until',
+  'when',
+  'while',
+  'yield',
 ]
 
 # Registers the lexer with the lexers registry.
 fn pub register(languages: mut Languages) {
-  languages.add(Language {
-    @name = 'ruby',
-    @aliases = [],
-    @builder = fn (in) { Lexer.new(in) as LexerTrait }
-  })
+  languages.add(
+    Language(
+      name: 'ruby',
+      aliases: [],
+      builder: fn (in) { Lexer.new(in) as LexerTrait },
+    ),
+  )
 }
 
 fn word_byte?(buffer: mut Buffer, byte: Int) -> Bool {
-  if bytes.letter_or_digit?(byte) or byte == bytes.UNDER  { return true }
+  if bytes.letter_or_digit?(byte) or byte == bytes.UNDER { return true }
+
   if byte == bytes.QUEST { buffer.offset += 1 }
+
   false
 }
 
@@ -39,25 +88,24 @@ class pub Lexer {
 
   # Returns a new `Lexer` that lexes the given input.
   fn pub static new(bytes: ref ByteArray) -> Lexer {
-    Lexer {
-      @buffer = Buffer.new(bytes),
-      @keywords = Keywords.new(KEYWORDS),
-    }
+    Lexer(buffer: Buffer.new(bytes), keywords: Keywords.new(KEYWORDS))
   }
 
   fn mut word -> Token {
-    helpers
-      .text_or_keyword(@buffer, @keywords) fn (b) { word_byte?(@buffer, b) }
+    helpers.text_or_keyword(@buffer, @keywords, fn (b) {
+      word_byte?(@buffer, b)
+    })
   }
 
   fn mut field -> Token {
     let start = @buffer.offset
 
     @buffer.offset += 1
+
     if @buffer.get == bytes.AT { @buffer.offset += 1 }
 
     if bytes.letter_or_digit?(@buffer.get) or @buffer.get == bytes.UNDER {
-      @buffer.advance_while fn move (b) { word_byte?(@buffer, b) }
+      @buffer.advance_while(fn move (b) { word_byte?(@buffer, b) })
       @buffer.token(TokenKind.Field, start)
     } else {
       @buffer.token(TokenKind.Text, start)
@@ -72,18 +120,24 @@ class pub Lexer {
     let quote = match @buffer.get {
       case bytes.SQUOTE -> bytes.SQUOTE
       case bytes.DQUOTE -> bytes.DQUOTE
-      case byte if
-        bytes.letter?(byte) or byte == bytes.UNDER or byte == bytes.DOLLAR ->
-      {
+      case
+        byte
+      if bytes.letter?(byte) or byte == bytes.UNDER or byte == bytes.DOLLAR
+      -> {
         @buffer.offset += 1
-        @buffer.advance_while fn (b) { word_byte?(@buffer, b) }
+        @buffer.advance_while(fn (b) { word_byte?(@buffer, b) })
         return @buffer.token(TokenKind.Symbol, start)
       }
       case _ -> return @buffer.token(TokenKind.Text, start)
     }
 
-    helpers
-      .delimited_token(@buffer, TokenKind.Symbol, quote, start, escape: true)
+    helpers.delimited_token(
+      @buffer,
+      TokenKind.Symbol,
+      quote,
+      start,
+      escape: true,
+    )
   }
 
   fn mut percent_string -> Token {
@@ -99,8 +153,13 @@ class pub Lexer {
       case _ -> return @buffer.token(TokenKind.Text, start)
     }
 
-    helpers
-      .delimited_token(@buffer, TokenKind.String, close, start, escape: true)
+    helpers.delimited_token(
+      @buffer,
+      TokenKind.String,
+      close,
+      start,
+      escape: true,
+    )
   }
 }
 
