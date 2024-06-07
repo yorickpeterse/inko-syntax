@@ -16,6 +16,7 @@ let LCURLY = 123
 let LF = 10
 let LOWER_A = 97
 let LOWER_E = 101
+let LOWER_F = 102
 let LOWER_X = 120
 let LOWER_Z = 122
 let LPAREN = 40
@@ -35,6 +36,7 @@ let TAB = 9
 let UNDER = 95
 let UPPER_A = 65
 let UPPER_E = 69
+let UPPER_F = 70
 let UPPER_X = 88
 let UPPER_Z = 90
 let ZERO = 48
@@ -57,6 +59,12 @@ fn letter?(byte: Int) -> Bool {
 
 fn letter_or_digit?(byte: Int) -> Bool {
   letter?(byte) or digit?(byte)
+}
+
+fn hex?(byte: Int) -> Bool {
+  digit?(byte)
+    or (byte >= LOWER_A and byte <= LOWER_F)
+    or (byte >= UPPER_A and byte <= UPPER_F)
 }
 
 fn symbol?(byte: Int) -> Bool {

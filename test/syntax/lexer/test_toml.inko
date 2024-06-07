@@ -32,6 +32,8 @@ fn pub tests(t: mut Tests) {
     t.equal(lex('0x123'), [Token.new(TokenKind.Int, '0x123')])
     t.equal(lex('0X123'), [Token.new(TokenKind.Int, '0X123')])
     t.equal(lex('10.5'), [Token.new(TokenKind.Float, '10.5')])
+    t.equal(lex('0x5D'), [Token.new(TokenKind.Int, '0x5D')])
+    t.equal(lex('0x1aF'), [Token.new(TokenKind.Int, '0x1aF')])
     t.equal(
       lex('10.a'),
       [

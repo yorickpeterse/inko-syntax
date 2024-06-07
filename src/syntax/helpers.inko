@@ -6,6 +6,10 @@ fn digits_or_underscore(buffer: mut Buffer) {
   buffer.advance_while(fn (b) { bytes.digit?(b) or b == bytes.UNDER })
 }
 
+fn hex_digits(buffer: mut Buffer) {
+  buffer.advance_while(fn (b) { bytes.hex?(b) or b == bytes.UNDER })
+}
+
 fn token_containing(
   buffer: mut Buffer,
   kind: TokenKind,
@@ -111,9 +115,12 @@ fn int_or_float(buffer: mut Buffer) -> Token {
     case _ -> false
   }
 
-  digits_or_underscore(buffer)
+  if hex {
+    hex_digits(buffer)
+    return buffer.token(TokenKind.Int, start)
+  }
 
-  if hex { return buffer.token(TokenKind.Int, start) }
+  digits_or_underscore(buffer)
 
   match buffer.get {
     case bytes.PERIOD -> {
