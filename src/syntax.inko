@@ -144,9 +144,11 @@ class pub Keywords {
   #
   # # Examples
   #
-  #     import syntax (Keywords)
+  # ```inko
+  # import syntax (Keywords)
   #
-  #     Keywords.new(['fn', 'class', 'async'])
+  # Keywords.new(['fn', 'class', 'async'])
+  # ```
   fn pub static new(keywords: ref Array[String]) -> Keywords {
     let words = Set.new
     let first = ByteArray.filled(with: 0, times: 255)
@@ -182,12 +184,14 @@ class pub Keywords {
   #
   # # Examples
   #
-  #     import syntax (Keywords)
+  # ```
+  # import syntax (Keywords)
   #
-  #     let kw = Keywords.new(['class', 'async', 'fn'])
-  #     let input = 'class'.to_byte_array
+  # let kw = Keywords.new(['class', 'async', 'fn'])
+  # let input = 'class'.to_byte_array
   #
-  #     kw.contains_range?(input, at: 0, size: input.size) # => true
+  # kw.contains_range?(input, at: 0, size: input.size) # => true
+  # ```
   fn pub contains_range?(bytes: ref ByteArray, at: Int, size: Int) -> Bool {
     size >= 2
       and @first.get(bytes.get(at)) == 1
@@ -283,19 +287,23 @@ class pub Buffer {
 #
 # Getting a language using a name, and creating its lexer:
 #
-#     import syntax (Languages)
+# ```inko
+# import syntax (Languages)
 #
-#     let langs = Languages.new
+# let langs = Languages.new
 #
-#     langs.for_name('inko').unwrap.create('# test'.to_byte_array)
+# langs.for_name('inko').unwrap.create('# test'.to_byte_array)
+# ```
 #
 # Getting a language using a file name:
 #
-#     import syntax (Languages)
+# ```inko
+# import syntax (Languages)
 #
-#     let langs = Languages.new
+# let langs = Languages.new
 #
-#     langs.for_filename('*.inko').unwrap.create('# test'.to_byte_array)
+# langs.for_filename('*.inko').unwrap.create('# test'.to_byte_array)
+# ```
 class pub Languages {
   let @map: Map[String, Language]
   let @aliases: Map[String, mut Language]

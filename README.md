@@ -20,22 +20,18 @@ inko pkg sync
 
 ## Supported languages
 
-| Language                                      | Name      | Aliases
-|:----------------------------------------------|:----------|:-------
-| [C](https://www.open-std.org/jtc1/sc22/wg14/) | `c`       | `cpp`
-| [Fish](https://fishshell.com/)                | `fish`    |
-| [Inko](https://inko-lang.org/)                | `inko`    |
-| [Make](https://www.gnu.org/software/make/)    | `make`    |
-| [Ruby](https://www.ruby-lang.org/en/)         | `ruby`    |
-| [Rust](https://www.rust-lang.org/)            | `rust`    |
-| Shell                                         | `shell`   | `bash`, `sh`, `zsh`, `ksh`
-| [TOML](https://toml.io/)                      | `toml`    |
+- [C](https://www.open-std.org/jtc1/sc22/wg14/): `c` (aliased as `cpp`)
+- [Fish](https://fishshell.com/): `fish`
+- [Inko](https://inko-lang.org/): `inko`
+- [Make](https://www.gnu.org/software/make/): `make`
+- [Ruby](https://www.ruby-lang.org/en/): `ruby`
+- [Rust](https://www.rust-lang.org/): `rust`
+- Shell: `shell` (aliases as `bash`, `sh`, `zsh`, `ksh`)
+- [TOML](https://toml.io/): `toml`
 
 ## Supported formats
 
-| Format                   | Formatter
-|:-------------------------|:--------------------
-| Pygments compatible HTML | `syntax.format.Html`
+- Pygments compatible HTML
 
 ## Usage
 
