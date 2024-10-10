@@ -1,8 +1,6 @@
 # Formatting of token streams as HTML.
 import builder.html (Document)
-import std.iter (Iter)
-import std.string (StringBuffer)
-import syntax (Lexer, Token, TokenKind)
+import syntax (Lexer)
 
 # A type that forms a lexer's token stream as HTML.
 #

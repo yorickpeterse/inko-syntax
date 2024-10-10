@@ -2,7 +2,6 @@
 import std.iter (Iter)
 import syntax (
   Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
-  TokenKind,
 )
 import syntax.bytes
 import syntax.helpers

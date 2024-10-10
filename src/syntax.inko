@@ -4,8 +4,6 @@ import std.fmt (Format as Format, Formatter)
 import std.hash (Hash, Hasher)
 import std.iter (Iter)
 import std.set (Set)
-import syntax.bytes (BSLASH, LF, whitespace?)
-import syntax.format
 import syntax.lexer.c
 import syntax.lexer.fish
 import syntax.lexer.inko
