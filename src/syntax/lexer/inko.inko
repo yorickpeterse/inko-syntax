@@ -15,6 +15,7 @@ let KEYWORDS = [
   'builtin',
   'case',
   'class',
+  'copy',
   'else',
   'enum',
   'extern',
