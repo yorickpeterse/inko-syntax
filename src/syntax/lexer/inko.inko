@@ -69,7 +69,7 @@ fn word_byte?(buffer: mut Buffer, byte: Int) -> Bool {
 }
 
 # A lexer for Inko syntax.
-type pub Lexer {
+class pub Lexer {
   let @buffer: Buffer
   let @keywords: Keywords
 
