@@ -44,6 +44,7 @@ let KEYWORDS = [
   'trait',
   'true',
   'try',
+  'type',
   'uni',
   'while',
 ]
@@ -68,7 +69,7 @@ fn word_byte?(buffer: mut Buffer, byte: Int) -> Bool {
 }
 
 # A lexer for Inko syntax.
-class pub Lexer {
+type pub Lexer {
   let @buffer: Buffer
   let @keywords: Keywords
 
