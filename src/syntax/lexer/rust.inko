@@ -1,5 +1,4 @@
 # Lexical analysis of Rust syntax.
-import std.iter (Iter)
 import syntax (
   Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
   TokenKind,
@@ -65,7 +64,7 @@ fn word_byte?(byte: Int) -> Bool {
 }
 
 # A lexer for Rust syntax.
-class pub Lexer {
+type pub Lexer {
   let @buffer: Buffer
   let @keywords: Keywords
 
@@ -81,11 +80,10 @@ class pub Lexer {
 
     if @buffer.get == bytes.EXCL {
       @buffer.offset += 1
-      token.value = token.value + '!'
-      token.kind = TokenKind.Macro
+      Token.new(TokenKind.Macro, token.value + '!')
+    } else {
+      token
     }
-
-    token
   }
 
   fn mut ampersand -> Token {
@@ -110,7 +108,7 @@ class pub Lexer {
   }
 }
 
-impl Iter[Token] for Lexer {
+impl LexerTrait for Lexer {
   fn pub mut next -> Option[Token] {
     match @buffer.get {
       case bytes.SQUOTE -> Option.Some(single_quote)
@@ -131,9 +129,7 @@ impl Iter[Token] for Lexer {
       case _ -> Option.Some(helpers.single_byte(@buffer))
     }
   }
-}
 
-impl LexerTrait for Lexer {
   fn pub mut buffer -> mut Buffer {
     @buffer
   }

@@ -1,5 +1,4 @@
 # Lexical analysis of Fish syntax.
-import std.iter (Iter)
 import syntax (
   Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
 )
@@ -139,7 +138,7 @@ fn pub register(languages: mut Languages) {
 }
 
 # A lexer for the Fish shell (https://fishshell.com/).
-class pub Lexer {
+type pub Lexer {
   let @buffer: Buffer
   let @keywords: Keywords
 
@@ -157,7 +156,7 @@ class pub Lexer {
   }
 }
 
-impl Iter[Token] for Lexer {
+impl LexerTrait for Lexer {
   fn pub mut next -> Option[Token] {
     match @buffer.get {
       case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
@@ -175,9 +174,7 @@ impl Iter[Token] for Lexer {
       case _ -> Option.Some(helpers.single_byte(@buffer))
     }
   }
-}
 
-impl LexerTrait for Lexer {
   fn pub mut buffer -> mut Buffer {
     @buffer
   }

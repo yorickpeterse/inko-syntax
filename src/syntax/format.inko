@@ -6,12 +6,12 @@ import syntax (Lexer)
 #
 # The generated HTML is compatible with [Pygments](https://pygments.org/)
 # stylesheets.
-class pub Html {
+type pub Html {
   # A base/generic class to apply to the surrounding `<div>` and `<pre>`
   # elements.
   #
   # This field defaults to "highlight".
-  let pub @base_class: Option[String]
+  let pub mut @base_class: Option[String]
 
   # An extra class to apply to the `<pre>` element.
   #
@@ -19,7 +19,7 @@ class pub Html {
   # when formatting Bash code.
   #
   # By default, no extra class is added.
-  let pub @pre_class: Option[String]
+  let pub mut @pre_class: Option[String]
 
   # Returns a new HTML formatter.
   fn pub static new -> Html {

@@ -1,10 +1,9 @@
-import std.iter (Iter)
 import std.test (Tests)
 import syntax (
   Buffer, EOF, Keywords, Language, Languages, Lexer, Token, TokenKind,
 )
 
-class DummyLexer {
+type DummyLexer {
   let @buffer: Buffer
 
   fn static new(bytes: ref ByteArray) -> DummyLexer {
@@ -12,13 +11,11 @@ class DummyLexer {
   }
 }
 
-impl Iter[Token] for DummyLexer {
+impl Lexer for DummyLexer {
   fn pub mut next -> Option[Token] {
     Option.None
   }
-}
 
-impl Lexer for DummyLexer {
   fn pub mut buffer -> mut Buffer {
     @buffer
   }

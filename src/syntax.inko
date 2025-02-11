@@ -2,7 +2,6 @@
 import std.cmp (Equal)
 import std.fmt (Format as Format, Formatter)
 import std.hash (Hash, Hasher)
-import std.iter (Iter)
 import std.set (Set)
 import syntax.lexer.c
 import syntax.lexer.fish
@@ -17,7 +16,7 @@ import syntax.lexer.toml
 # the input is reached.
 let pub EOF = -1
 
-class pub enum TokenKind {
+type pub copy enum TokenKind {
   # A single or multi-line comment.
   case Comment
 
@@ -64,7 +63,7 @@ impl Hash for TokenKind {
   }
 }
 
-impl Equal[ref TokenKind] for TokenKind {
+impl Equal for TokenKind {
   fn pub ==(other: ref TokenKind) -> Bool {
     match (self, other) {
       case (Comment, Comment) -> true
@@ -98,7 +97,7 @@ impl Format for TokenKind {
 }
 
 # A token to highlight.
-class pub Token {
+type pub inline Token {
   # The kind/type of token.
   let pub @kind: TokenKind
 
@@ -111,7 +110,7 @@ class pub Token {
   }
 }
 
-impl Equal[ref Token] for Token {
+impl Equal for Token {
   fn pub ==(other: ref Token) -> Bool {
     @kind == other.kind and @value == other.value
   }
@@ -124,7 +123,28 @@ impl Format for Token {
 }
 
 # A type that turns a buffer into a token stream.
-trait pub Lexer: Iter[Token] {
+trait pub Lexer {
+  # Calls the provided closure for each token in the token stream.
+  fn pub inline move each(fun: fn (Token)) {
+    loop {
+      match self.next {
+        case Some(v) -> fun.call(v)
+        case _ -> break
+      }
+    }
+  }
+
+  # Returns an `Array` containing all the tokens in the token stream.
+  fn pub move to_array -> Array[Token] {
+    let tokens = []
+
+    each(fn (v) { tokens.push(v) })
+    tokens
+  }
+
+  # Returns the next token, if any.
+  fn pub mut next -> Option[Token]
+
   # The buffer to turn into a token stream.
   fn pub mut buffer -> mut Buffer
 }
@@ -133,7 +153,7 @@ trait pub Lexer: Iter[Token] {
 #
 # This type only supports keywords with a minimum size of two bytes. Input
 # smaller than two bytes is never treated as a keyword.
-class pub Keywords {
+type pub Keywords {
   let @words: Set[ByteArray]
   let @first: ByteArray
   let @second: ByteArray
@@ -199,7 +219,7 @@ class pub Keywords {
 }
 
 # A type describing a language, such as its file extensions and names.
-class pub Language {
+type pub Language {
   # The identifier/primary name of the language.
   #
   # This name should be a lowercase alphanumerical name, such that it's valid
@@ -225,12 +245,12 @@ class pub Language {
 }
 
 # A type that represents a bunch of bytes to process using a lexer.
-class pub Buffer {
+type pub Buffer {
   # The bytes that are to be turned into a token stream.
   let pub @bytes: ref ByteArray
 
   # The current byte offset.
-  let pub @offset: Int
+  let pub mut @offset: Int
 
   # Returns a new `Buffer` that wraps the given `ByteArray`.
   fn pub static new(bytes: ref ByteArray) -> Buffer {
@@ -302,7 +322,7 @@ class pub Buffer {
 #
 # langs.for_filename('*.inko').unwrap.create('# test'.to_byte_array)
 # ```
-class pub Languages {
+type pub Languages {
   let @map: Map[String, Language]
   let @aliases: Map[String, mut Language]
 
