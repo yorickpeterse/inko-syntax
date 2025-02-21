@@ -24,6 +24,7 @@ let KEYWORDS = [
   'if',
   'impl',
   'import',
+  'in',
   'inline',
   'let',
   'loop',
