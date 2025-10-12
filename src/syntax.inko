@@ -6,6 +6,7 @@ import std.set (Set)
 import syntax.lexer.c
 import syntax.lexer.fish
 import syntax.lexer.inko
+import syntax.lexer.json
 import syntax.lexer.make
 import syntax.lexer.ruby
 import syntax.lexer.rust
@@ -338,6 +339,7 @@ type pub Languages {
     rust.register(langs)
     shell.register(langs)
     toml.register(langs)
+    json.register(langs)
     langs
   }
 

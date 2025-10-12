@@ -1,0 +1,80 @@
+import std.test (Tests)
+import syntax (Token, TokenKind)
+import syntax.lexer.json (KEYWORDS, Lexer)
+
+fn lex(input: String) -> Array[Token] {
+  Lexer.new(input.to_byte_array).to_array
+}
+
+fn pub tests(t: mut Tests) {
+  t.test('Strings', fn (t) {
+    t.equal(lex('""'), [Token.new(TokenKind.String, '""')])
+    t.equal(lex('"foo"'), [Token.new(TokenKind.String, '"foo"')])
+    t.equal(lex('"a\\"b"'), [Token.new(TokenKind.String, '"a\\"b"')])
+  })
+
+  t.test('Numbers', fn (t) {
+    t.equal(lex('10'), [Token.new(TokenKind.Int, '10')])
+    t.equal(lex('10.5'), [Token.new(TokenKind.Float, '10.5')])
+    t.equal(
+      lex('10.a'),
+      [
+        Token.new(TokenKind.Int, '10'),
+        Token.new(TokenKind.Text, '.'),
+        Token.new(TokenKind.Text, 'a'),
+      ],
+    )
+  })
+
+  t.test('Symbols', fn (t) {
+    [
+      '~',
+      '!',
+      '$',
+      '%',
+      '^',
+      '&',
+      '*',
+      '(',
+      ')',
+      '_',
+      '+',
+      '`',
+      '-',
+      '=',
+      '{',
+      '}',
+      '[',
+      ']',
+      '<',
+      '>',
+      ',',
+      '.',
+      '/',
+      '?',
+      '\\',
+      '|',
+    ]
+      .into_iter
+      .each(fn (sym) { t.equal(lex(sym), [Token.new(TokenKind.Text, sym)]) })
+  })
+
+  t.test('Identifiers and keywords', fn (t) {
+    KEYWORDS.iter.each(fn (kw) {
+      t.equal(lex(kw), [Token.new(TokenKind.Keyword, kw)])
+    })
+  })
+
+  t.test('Whitespace', fn (t) {
+    t.equal(lex(' '), [Token.new(TokenKind.Text, ' ')])
+    t.equal(lex('\t'), [Token.new(TokenKind.Text, '\t')])
+    t.equal(lex('\n'), [Token.new(TokenKind.Text, '\n')])
+    t.equal(lex('\r'), [Token.new(TokenKind.Text, '\r')])
+  })
+
+  t.test('Invalid syntax', fn (t) {
+    t.equal(lex('ab'), [Token.new(TokenKind.Text, 'ab')])
+    t.equal(lex('\0'), [Token.new(TokenKind.Text, '\0')])
+    t.equal(lex('\u{1}'), [Token.new(TokenKind.Text, '\u{1}')])
+  })
+}

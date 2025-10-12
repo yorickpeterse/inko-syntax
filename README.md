@@ -23,6 +23,7 @@ inko pkg sync
 - [C](https://www.open-std.org/jtc1/sc22/wg14/): `c` (aliased as `cpp`)
 - [Fish](https://fishshell.com/): `fish`
 - [Inko](https://inko-lang.org/): `inko`
+- [JSON](https://www.json.org/json-en.html): `json`
 - [Make](https://www.gnu.org/software/make/): `make`
 - [Ruby](https://www.ruby-lang.org/en/): `ruby`
 - [Rust](https://www.rust-lang.org/): `rust`

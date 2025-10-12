@@ -1,0 +1,55 @@
+# Lexical analysis of JSON syntax.
+import syntax (
+  Buffer, EOF, Keywords, Language, Languages, Lexer as LexerTrait, Token,
+)
+import syntax.bytes
+import syntax.helpers
+
+let KEYWORDS = ['false', 'true', 'null']
+
+# Registers the lexer with the lexers registry.
+fn pub register(languages: mut Languages) {
+  languages.add(
+    Language(
+      name: 'json',
+      aliases: [],
+      builder: fn (in) { Lexer.new(in) as LexerTrait },
+    ),
+  )
+}
+
+# A lexer for JSON.
+type pub Lexer {
+  let @buffer: Buffer
+  let @keywords: Keywords
+
+  # Returns a new `Lexer` that lexes the given input.
+  fn pub static new(bytes: ref ByteArray) -> Lexer {
+    Lexer(buffer: Buffer.new(bytes), keywords: Keywords.new(KEYWORDS))
+  }
+
+  fn mut word -> Token {
+    helpers.text_or_keyword(@buffer, @keywords, fn (b) { bytes.letter?(b) })
+  }
+}
+
+impl LexerTrait for Lexer {
+  fn pub mut next -> Option[Token] {
+    match @buffer.get {
+      case bytes.DQUOTE -> Option.Some(helpers.double_string(@buffer))
+      case byte if bytes.digit?(byte) -> {
+        Option.Some(helpers.int_or_float(@buffer))
+      }
+      case byte if bytes.letter?(byte) -> Option.Some(word)
+      case byte if bytes.whitespace?(byte) -> {
+        Option.Some(helpers.whitespace(@buffer))
+      }
+      case EOF -> Option.None
+      case _ -> Option.Some(helpers.single_byte(@buffer))
+    }
+  }
+
+  fn pub mut buffer -> mut Buffer {
+    @buffer
+  }
+}

@@ -79,6 +79,7 @@ fn pub tests(t: mut Tests) {
     t.true(langs.get('rust').some?)
     t.true(langs.get('shell').some?)
     t.true(langs.get('toml').some?)
+    t.true(langs.get('json').some?)
   })
 
   t.test('Languages.add', fn (t) {
