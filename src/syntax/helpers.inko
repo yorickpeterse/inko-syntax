@@ -98,7 +98,7 @@ fn text_or_keyword(
 
   buffer.advance_while(condition)
 
-  if keywords.contains_range?(buffer.bytes, start, buffer.offset - start) {
+  if keywords.contains_range?(buffer.bytes, start, buffer.offset) {
     buffer.token(TokenKind.Keyword, start)
   } else {
     buffer.token(TokenKind.Text, start)

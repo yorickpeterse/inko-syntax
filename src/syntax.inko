@@ -188,13 +188,12 @@ type pub Keywords {
   #
   # The `bytes` argument is a `ByteArray` (e.g. a reusable buffer) to check.
   #
-  # The `at` and `size` arguments specify the index to `bytes` and the number of
-  # bytes to check respectively.
+  # The `at` and `end` arguments specify the start and end indexes to `bytes`
+  # respectively.
   #
   # # Panics
   #
-  # This method panics if `at` or `at + size` is not within the bounds of
-  # `bytes`.
+  # This method panics if the range is not within bounds.
   #
   # # Examples
   #
@@ -204,13 +203,13 @@ type pub Keywords {
   # let kw = Keywords.new(['class', 'async', 'fn'])
   # let input = 'class'.to_byte_array
   #
-  # kw.contains_range?(input, at: 0, size: input.size) # => true
+  # kw.contains_range?(input, at: 0, end: 5) # => true
   # ```
-  fn pub contains_range?(bytes: ref ByteArray, at: Int, size: Int) -> Bool {
-    size >= 2
+  fn pub contains_range?(bytes: ref ByteArray, at: Int, end: Int) -> Bool {
+    (end - at) >= 2
       and @first.get(bytes.get(at).or_panic).or_panic == 1
       and @second.get(bytes.get(at + 1).or_panic).or_panic == 1
-      and @words.contains?(bytes.slice(at, at + size).to_byte_array)
+      and @words.contains?(bytes.slice(at, end).to_byte_array)
   }
 }
 
@@ -273,8 +272,8 @@ type pub Buffer {
   }
 
   # Slices the buffer into a substring.
-  fn pub slice(start: Int, size: Int) -> String {
-    @bytes.slice(start, start + size).to_string
+  fn pub slice(start: Int, end: Int) -> String {
+    @bytes.slice(start, end).to_string
   }
 
   # Advances the cursor while the given closure returns `true`.
@@ -289,7 +288,7 @@ type pub Buffer {
   # Returns a new token starting at the given offset that ranges until the
   # current offset.
   fn pub token(kind: TokenKind, start: Int) -> Token {
-    Token.new(kind, value: slice(start, @offset - start))
+    Token.new(kind, value: slice(start, @offset))
   }
 }
 
