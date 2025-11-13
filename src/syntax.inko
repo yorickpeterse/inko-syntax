@@ -65,7 +65,7 @@ impl Hash for TokenKind {
 }
 
 impl Equal for TokenKind {
-  fn pub ==(other: ref TokenKind) -> Bool {
+  fn pub ==(other: TokenKind) -> Bool {
     match (self, other) {
       case (Comment, Comment) -> true
       case (String, String) -> true
@@ -173,13 +173,13 @@ type pub Keywords {
     let first = ByteArray.filled(with: 0, times: 255)
     let second = ByteArray.filled(with: 0, times: 255)
 
-    keywords.iter.select(fn (w) { w.size >= 2 }).each(fn (word) {
+    for word in keywords.iter.select(fn (w) { w.size >= 2 }) {
       let bytes = word.to_byte_array
 
-      first.set(bytes.get(0), 1)
-      second.set(bytes.get(1), 1)
+      first.set(bytes.get(0).or_panic, 1)
+      second.set(bytes.get(1).or_panic, 1)
       words.insert(bytes)
-    })
+    }
 
     Keywords(words: words, first: first, second: second)
   }
@@ -213,9 +213,9 @@ type pub Keywords {
   # ```
   fn pub contains_range?(bytes: ref ByteArray, at: Int, size: Int) -> Bool {
     size >= 2
-      and @first.get(bytes.get(at)) == 1
-      and @second.get(bytes.get(at + 1)) == 1
-      and @words.contains?(bytes.slice(at, size))
+      and @first.get(bytes.get(at).or_panic).or_panic == 1
+      and @second.get(bytes.get(at + 1).or_panic).or_panic == 1
+      and @words.contains?(bytes.slice(at, at + size).to_byte_array)
   }
 }
 
@@ -274,17 +274,19 @@ type pub Buffer {
   fn pub peek(amount: Int) -> Int {
     let idx = @offset + amount
 
-    if idx < @bytes.size { @bytes.byte(idx) } else { EOF }
+    if idx < @bytes.size { @bytes.get(idx).or_panic } else { EOF }
   }
 
   # Slices the buffer into a substring.
   fn pub slice(start: Int, size: Int) -> String {
-    @bytes.slice(start, size).into_string
+    @bytes.slice(start, start + size).to_string
   }
 
   # Advances the cursor while the given closure returns `true`.
   fn pub mut advance_while(condition: fn (Int) -> Bool) {
-    while @offset < @bytes.size and condition.call(@bytes.byte(@offset)) {
+    while
+      @offset < @bytes.size and condition.call(@bytes.get(@offset).or_panic)
+    {
       @offset += 1
     }
   }
@@ -354,7 +356,8 @@ type pub Languages {
 
   # Registers a new language.
   fn pub mut add(language: Language) {
-    language.aliases.iter.each(fn (name) { @aliases.set(name, language) })
+    for name in language.aliases.iter { @aliases.set(name, language) }
+
     @map.set(language.name, language)
   }
 
@@ -362,6 +365,6 @@ type pub Languages {
   #
   # If the name isn't recognized, a `None` is returned.
   fn pub mut get(name: String) -> Option[mut Language] {
-    @map.opt_mut(name).else(fn { @aliases.opt_mut(name) })
+    @map.get_mut(name).ok.else(fn { @aliases.get_mut(name).ok })
   }
 }

@@ -124,8 +124,8 @@ fn int_or_float(buffer: mut Buffer) -> Token {
 
   match buffer.get {
     case bytes.PERIOD -> {
-      if bytes.digit?(buffer.peek(1)).false? {
-        let value = buffer.slice(start, buffer.offset - start)
+      if !bytes.digit?(buffer.peek(1)) {
+        let value = buffer.slice(start, buffer.offset)
 
         return Token.new(TokenKind.Int, value)
       }

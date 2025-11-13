@@ -18,14 +18,14 @@ fn pub tests(t: mut Tests) {
       ('# a\n10', '<span class="c"># a</span>\n<span class="mi">10</span>'),
     ]
 
-    tests.into_iter.each(fn (pair) {
+    for pair in tests.into_iter {
       let bytes = pair.0.to_byte_array
 
       t.equal(
         Html.new.format(Lexer.new(bytes)).to_string,
         '<div class="highlight"><pre class="highlight"><code>${pair.1}</code></pre></div>',
       )
-    })
+    }
   })
 
   t.test('Html.format without any classes', fn (t) {

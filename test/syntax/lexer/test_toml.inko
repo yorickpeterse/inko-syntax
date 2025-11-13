@@ -45,36 +45,40 @@ fn pub tests(t: mut Tests) {
   })
 
   t.test('Symbols', fn (t) {
-    [
-      '~',
-      '!',
-      '$',
-      '%',
-      '^',
-      '&',
-      '*',
-      '(',
-      ')',
-      '_',
-      '+',
-      '`',
-      '-',
-      '=',
-      '{',
-      '}',
-      '[',
-      ']',
-      '<',
-      '>',
-      ',',
-      '.',
-      '/',
-      '?',
-      '\\',
-      '|',
-    ]
-      .into_iter
-      .each(fn (sym) { t.equal(lex(sym), [Token.new(TokenKind.Text, sym)]) })
+    for
+      sym
+    in
+      [
+        '~',
+        '!',
+        '$',
+        '%',
+        '^',
+        '&',
+        '*',
+        '(',
+        ')',
+        '_',
+        '+',
+        '`',
+        '-',
+        '=',
+        '{',
+        '}',
+        '[',
+        ']',
+        '<',
+        '>',
+        ',',
+        '.',
+        '/',
+        '?',
+        '\\',
+        '|',
+      ]
+    {
+      t.equal(lex(sym), [Token.new(TokenKind.Text, sym)])
+    }
   })
 
   t.test('Identifiers and keywords', fn (t) {
@@ -94,9 +98,9 @@ fn pub tests(t: mut Tests) {
       ],
     )
 
-    KEYWORDS.iter.each(fn (kw) {
+    for kw in KEYWORDS.iter {
       t.equal(lex(kw), [Token.new(TokenKind.Keyword, kw)])
-    })
+    }
   })
 
   t.test('Whitespace', fn (t) {

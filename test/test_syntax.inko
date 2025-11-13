@@ -55,7 +55,13 @@ fn pub tests(t: mut Tests) {
     let buf = Buffer.new(bytes)
 
     t.equal(buf.slice(start: 0, size: 3), 'abc')
-    t.equal(buf.slice(start: 0, size: 10), 'abc')
+  })
+
+  t.panic('Buffer.slice with an out of bounds range', fn {
+    let bytes = 'abc'.to_byte_array
+    let buf = Buffer.new(bytes)
+
+    buf.slice(start: 0, size: 10)
   })
 
   t.test('Buffer.token', fn (t) {
@@ -89,7 +95,7 @@ fn pub tests(t: mut Tests) {
       Language(
         name: 'foo',
         aliases: ['bar'],
-        builder: fn (in) { DummyLexer.new(in) as Lexer },
+        builder: fn (inp) { DummyLexer.new(inp) as Lexer },
       ),
     )
 
@@ -97,7 +103,7 @@ fn pub tests(t: mut Tests) {
       Language(
         name: 'ruby',
         aliases: [],
-        builder: fn (in) { DummyLexer.new(in) as Lexer },
+        builder: fn (inp) { DummyLexer.new(inp) as Lexer },
       ),
     )
 
@@ -114,7 +120,7 @@ fn pub tests(t: mut Tests) {
       Language(
         name: 'foo',
         aliases: ['bar'],
-        builder: fn (in) { DummyLexer.new(in) as Lexer },
+        builder: fn (inp) { DummyLexer.new(inp) as Lexer },
       ),
     )
 

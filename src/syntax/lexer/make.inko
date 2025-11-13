@@ -75,7 +75,7 @@ fn pub register(languages: mut Languages) {
     Language(
       name: 'make',
       aliases: [],
-      builder: fn (in) { Lexer.new(in) as LexerTrait },
+      builder: fn (inp) { Lexer.new(inp) as LexerTrait },
     ),
   )
 }

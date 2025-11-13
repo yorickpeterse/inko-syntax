@@ -9,7 +9,7 @@ MIME type, or the file contents.
 
 ## Requirements
 
-- Inko 0.18.0 or newer
+- Inko 0.19.0 or newer
 
 ## Installation
 
