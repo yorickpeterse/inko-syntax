@@ -39,11 +39,11 @@ inko pkg sync
 A basic example:
 
 ```inko
-import std.stdio (STDOUT)
+import std.stdio (Stdout)
 import syntax (Languages)
 import syntax.format (Html)
 
-class async Main {
+type async Main {
   fn async main {
     # The `Languages` type is a registry of the available languages. This type
     # makes it easy to create a lexer for a language, without having to
@@ -52,7 +52,7 @@ class async Main {
 
     # This gets a language for the given name, returning a `None` if the name
     # isn't recognized.
-    let lang = langs.get('inko').unwrap
+    let lang = langs.get('inko').get
 
     # Now we can create a lexer and format it. Lexers take an immutable
     # reference to a `ByteArray`, so we need to keep it around until we've
@@ -64,7 +64,7 @@ class async Main {
     # HTML document fragment.
     let html = Html.new.format(lexer)
 
-    STDOUT.new.print(html.to_string)
+    Stdout.new.print(html.to_string)
   }
 }
 ```

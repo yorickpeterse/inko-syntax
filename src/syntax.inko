@@ -125,25 +125,20 @@ impl Format for Token {
 
 # A type that turns a buffer into a token stream.
 trait pub Lexer {
-  # Calls the provided closure for each token in the token stream.
-  fn pub inline move each(fun: fn (Token)) {
-    loop {
-      match self.next {
-        case Some(v) -> fun.call(v)
-        case _ -> break
-      }
-    }
-  }
-
   # Returns an `Array` containing all the tokens in the token stream.
   fn pub move to_array -> Array[Token] {
     let tokens = []
 
-    each(fn (v) { tokens.push(v) })
+    loop {
+      let Some(t) = self.next else break
+
+      tokens.push(t)
+    }
+
     tokens
   }
 
-  # Returns the next token, if any.
+  # Returns the next token in the token stream.
   fn pub mut next -> Option[Token]
 
   # The buffer to turn into a token stream.
@@ -313,7 +308,7 @@ type pub Buffer {
 #
 # let langs = Languages.new
 #
-# langs.for_name('inko').unwrap.create('# test'.to_byte_array)
+# langs.for_name('inko').get.create('# test'.to_byte_array)
 # ```
 #
 # Getting a language using a file name:
@@ -323,7 +318,7 @@ type pub Buffer {
 #
 # let langs = Languages.new
 #
-# langs.for_filename('*.inko').unwrap.create('# test'.to_byte_array)
+# langs.for_filename('*.inko').get.create('# test'.to_byte_array)
 # ```
 type pub Languages {
   let @map: Map[String, Language]

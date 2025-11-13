@@ -52,7 +52,9 @@ type pub Html {
       case _ -> {}
     }
 
-    lexer.each(fn (tok) {
+    loop {
+      let Some(tok) = lexer.next else break
+
       # These classes are taken from
       # https://github.com/pygments/pygments/blob/8f3bec7982ba52915ee95f34f18e188243364600/pygments/token.py.
       let cls = match tok.kind {
@@ -73,7 +75,7 @@ type pub Html {
       }
 
       el.text(tok.value)
-    })
+    }
 
     doc
   }
