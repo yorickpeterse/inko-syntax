@@ -60,7 +60,7 @@ impl Hash for TokenKind {
       case Macro -> 8
     }
 
-    hasher.write(val)
+    hasher.write_int(val)
   }
 }
 
