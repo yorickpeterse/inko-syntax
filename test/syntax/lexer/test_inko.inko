@@ -28,11 +28,11 @@ fn pub tests(t: mut Tests) {
     )
 
     t.equal(
-      lex('# a\nclass'),
+      lex('# a\ntype'),
       [
         Token.new(TokenKind.Comment, '# a'),
         Token.new(TokenKind.Text, '\n'),
-        Token.new(TokenKind.Keyword, 'class'),
+        Token.new(TokenKind.Keyword, 'type'),
       ],
     )
   })
@@ -67,6 +67,7 @@ fn pub tests(t: mut Tests) {
         Token.new(TokenKind.Text, 'a'),
       ],
     )
+    t.equal(lex('0b11_01'), [Token.new(TokenKind.Int, '0b11_01')])
   })
 
   t.test('Symbols', fn (t) {

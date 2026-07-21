@@ -10,6 +10,12 @@ fn hex_digits(buffer: mut Buffer) {
   buffer.advance_while(fn (b) { bytes.hex?(b) or b == bytes.UNDER })
 }
 
+fn binary_digits(buffer: mut Buffer) {
+  buffer.advance_while(fn (b) {
+    b == bytes.ZERO or b == bytes.ONE or b == bytes.UNDER
+  })
+}
+
 fn token_containing(
   buffer: mut Buffer,
   kind: TokenKind,
@@ -107,17 +113,19 @@ fn text_or_keyword(
 
 fn int_or_float(buffer: mut Buffer) -> Token {
   let start = buffer.offset
-  let hex = match buffer.peek(1) {
+
+  match buffer.peek(1) {
     case bytes.LOWER_X or bytes.UPPER_X -> {
       buffer.offset += 2
-      true
+      hex_digits(buffer)
+      return buffer.token(TokenKind.Int, start)
     }
-    case _ -> false
-  }
-
-  if hex {
-    hex_digits(buffer)
-    return buffer.token(TokenKind.Int, start)
+    case bytes.LOWER_B -> {
+      buffer.offset += 2
+      binary_digits(buffer)
+      return buffer.token(TokenKind.Int, start)
+    }
+    case _ -> {}
   }
 
   digits_or_underscore(buffer)

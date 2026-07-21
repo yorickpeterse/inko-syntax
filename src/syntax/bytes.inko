@@ -15,6 +15,7 @@ let LBRACK = 91
 let LCURLY = 123
 let LF = 10
 let LOWER_A = 97
+let LOWER_B = 98
 let LOWER_E = 101
 let LOWER_F = 102
 let LOWER_X = 120
@@ -40,6 +41,7 @@ let UPPER_F = 70
 let UPPER_X = 88
 let UPPER_Z = 90
 let ZERO = 48
+let ONE = 49
 
 fn whitespace?(byte: Int) -> Bool {
   byte == SPACE or byte == CR or byte == LF or byte == TAB
